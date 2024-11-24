@@ -555,6 +555,24 @@ static void finish_sound_buffer_sdl2_push(struct sound_data* sd, uae_u16* sndbuf
 		memset(sndbuffer, 0, sd->sndbufsize);
 		s->silence_written++; // In push mode no sound gen means no audio push so this might not be incremented frequently
 	}
+	auto avail = SDL_GetQueuedAudioSize(s->dev);
+	//docorrection(s, (s->sndbufsize - avail) * 1000 / s->sndbufsize, (float)(s->sndbufsize - avail), 100);
+
+	float vdiff = static_cast<float>(s->sndbufsize - avail) / static_cast<float>(sd->samplesize);
+	float m = 100.0f * vdiff / (s->sndbufsize / sd->samplesize);
+	float skipmode = sync_sound(m);
+
+	gui_data.sndbuf = (s->sndbufsize - avail) * 1000 / s->sndbufsize;
+	s->avg_correct += vdiff;
+	s->cnt_correct++;
+	float adj = (s->avg_correct / s->cnt_correct) / 50.0f;
+
+	if (skipmode > ADJUST_LIMIT2)
+		skipmode = ADJUST_LIMIT2;
+	if (skipmode < -ADJUST_LIMIT2)
+		skipmode = -ADJUST_LIMIT2;
+	sound_setadjust(skipmode + adj);
+	
 	SDL_QueueAudio(s->dev, sndbuffer, sd->sndbufsize);
 }
 
