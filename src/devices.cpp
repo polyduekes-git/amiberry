@@ -84,6 +84,7 @@
 #ifdef WITH_DSP
 #include "dsp3210/dsp_glue.h"
 #endif
+#include "keyboard_mcu.h"
 
 #define MAX_DEVICE_ITEMS 64
 
@@ -265,6 +266,9 @@ void devices_reset(int hardreset)
 #ifdef RETROPLATFORM
 	rp_reset();
 #endif
+	keymcu_reset();
+	keymcu2_reset();
+	keymcu3_reset();
 	uae_int_requested = 0;
 }
 
@@ -338,7 +342,9 @@ void devices_update_sound(float clk, float syncadjust)
 void devices_update_sync(float svpos, float syncadjust)
 {
 #ifdef CD32
+#ifdef USE_LIBMPEG2
 	cd32_fmv_set_sync(svpos, syncadjust);
+#endif
 #endif
 }
 
@@ -388,6 +394,9 @@ void virtualdevice_free(void)
 #ifdef WITH_DRACO
 	draco_free();
 #endif
+	keymcu_free();
+	keymcu2_free();
+	keymcu3_free();
 	execute_device_items(device_leaves, device_leave_cnt);
 }
 
@@ -447,6 +456,9 @@ void virtualdevice_init (void)
 #ifdef WITH_DRACO
 	draco_init();
 #endif
+	keymcu_init();
+	keymcu2_init();
+	keymcu3_init();
 }
 
 void devices_restore_start(void)

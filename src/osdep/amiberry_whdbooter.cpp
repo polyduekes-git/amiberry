@@ -25,7 +25,7 @@
 #include "midiemu.h"
 #include "registry.h"
 
-extern void SetLastActiveConfig(const char* filename);
+extern void set_last_active_config(const char* filename);
 extern std::string current_dir;
 extern char last_loaded_config[MAX_DPATH];
 
@@ -220,7 +220,7 @@ void make_rom_symlink(const std::string& kickstart_short_name, const int kicksta
 	if (!std::filesystem::exists(kickstart_long_path))
 	{
 		const int roms[2] = { kickstart_number, -1 };
-		// copy the existing prefs->romfile to a backup variable, so we can restore it afterwards
+		// copy the existing prefs->romfile to a backup variable, so we can restore it afterward
 		const std::string old_romfile = prefs->romfile;
 		if (configure_rom(prefs, roms, 0) == 1)
 		{
@@ -356,11 +356,11 @@ void cd_auto_prefs(uae_prefs* prefs, char* filepath)
 
 	prefs->start_gui = false;
 
-	const auto is_mt32 = _tcsstr(filepath, _T("MT32")) != nullptr || _tcsstr(filepath, _T("mt32")) != nullptr;
-	const auto is_cdtv = _tcsstr(filepath, _T("CDTV")) != nullptr || _tcsstr(filepath, _T("cdtv")) != nullptr;
-	bool is_cd32 = false;
+    const auto is_mt32 = whdload_prefs.filename.find("MT32") != std::string::npos || whdload_prefs.filename.find("mt32") != std::string::npos;
+    const auto is_cdtv = whdload_prefs.filename.find("CDTV") != std::string::npos || whdload_prefs.filename.find("cdtv") != std::string::npos;
+    const auto is_cd32 = whdload_prefs.filename.find("CD32") != std::string::npos || whdload_prefs.filename.find("cd32") != std::string::npos;
 
-	if (is_cdtv)
+	if (is_cdtv && !is_cd32)
 	{
 		_tcscpy(prefs->description, _T("AutoBoot Configuration [CDTV]"));
 		// SET THE BASE AMIGA (CDTV)
@@ -368,7 +368,6 @@ void cd_auto_prefs(uae_prefs* prefs, char* filepath)
 	}
 	else
 	{
-		is_cd32 = true;
 		_tcscpy(prefs->description, _T("AutoBoot Configuration [CD32]"));
 		// SET THE BASE AMIGA (CD32)
 		built_in_prefs(prefs, 8, 3, 0, 0);
@@ -616,7 +615,7 @@ void set_compatibility_settings(uae_prefs* prefs, const game_hardware_options& g
 		parse_cfg_line(prefs, line_string);
 	}
 
-	// CPU 68000/010 [requires a600 rom)]
+	// CPU 68000/010 (requires a600 rom)
 	else if ((strcmpi(game_detail.cpu.c_str(), "68000") == 0 || strcmpi(game_detail.cpu.c_str(), "68010") == 0) && a600_available)
 	{
 		line_string = "cpu_type=";
@@ -1367,8 +1366,8 @@ void whdload_auto_prefs(uae_prefs* prefs, const char* filepath)
 		// SET THE BASE AMIGA (Expanded A1200)
 		write_log("WHDBooter - Host: A1200 ROM selected\n");
 		built_in_prefs(prefs, 4, A1200_CONFIG, 0, 0);
-        // set 8MB Fast RAM
-        prefs->fastmem[0].size = 0x800000;
+		// set 8MB Fast RAM
+		prefs->fastmem[0].size = 0x800000;
 		_tcscpy(prefs->description, _T("AutoBoot Configuration [WHDLoad] [AGA]"));
 	}
 	else

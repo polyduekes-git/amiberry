@@ -41,7 +41,15 @@ If you're on Arch Linux you'll find Amiberry on the [AUR](https://aur.archlinux.
 
 ### macOS
 
-Amiberry is available as a DMG package for macOS. You can download the latest version from the [Releases](https://github.com/BlitterStudio/amiberry/releases) area.
+Amiberry is available as a DMG and Homebrew package for macOS. 
+
+For DMG package:
+
+You can download the latest version from the [Releases](https://github.com/BlitterStudio/amiberry/releases) area.
+
+Or the Homebrew package:
+
+      brew install --cask amiberry
 
 ### Distro package management
 
@@ -52,3 +60,7 @@ Some distros (like RetroPie, DietPi, Pimiga and others) already include Amiberry
 Alternatively, you can [compile the latest version of Amiberry from source](https://github.com/BlitterStudio/amiberry/wiki/Compile-from-source).
 
 For more documentation subjects, please check the [Wiki page](https://github.com/BlitterStudio/amiberry/wiki)
+
+### Supported by
+
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)

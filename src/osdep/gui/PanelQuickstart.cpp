@@ -11,6 +11,7 @@
 #include "disk.h"
 #include "blkdev.h"
 #include "gui_handling.h"
+#include "uae.h"
 
 static gcn::Label* lblModel;
 static gcn::DropDown* cboModel;
@@ -164,7 +165,7 @@ static amigamodels amodels[] = {
 	{-1}
 };
 
-static const int numModels = 13;
+static constexpr int numModels = 13;
 static int numModelConfigs = 0;
 static bool bIgnoreListChange = true;
 
@@ -314,6 +315,14 @@ static void RefreshDiskListModel()
 static void RefreshCDListModel()
 {
 	cdfileList.clear();
+	auto cd_drives = get_cd_drives();
+	if (!cd_drives.empty())
+	{
+		for (const auto& drive : cd_drives)
+		{
+			cdfileList.add(drive);
+		}
+	}
 	for(const auto & i : lstMRUCDList)
 	{
 		const std::string full_path = i;
@@ -344,6 +353,8 @@ public:
 			// Eject CD from drive
 			//---------------------------------------
 			changed_prefs.cdslots[0].name[0] = 0;
+			changed_prefs.cdslots[0].type = SCSI_UNIT_DEFAULT;
+			cboCDFile->clearSelected();
 			AdjustDropDownControls();
 		}
 		else if (actionEvent.getSource() == cmdCDSelect)
@@ -369,7 +380,8 @@ public:
 
 					RefreshCDListModel();
 					AdjustDropDownControls();
-					SetLastActiveConfig(tmp.c_str());
+					if (!last_loaded_config[0])
+						set_last_active_config(tmp.c_str());
 				}
 			}
 			cmdCDSelect->requestFocus();
@@ -388,26 +400,36 @@ public:
 			}
 			else
 			{
-				const auto element = get_full_path_from_disk_list(cdfileList.getElementAt(idx));
-				if (element != changed_prefs.cdslots[0].name)
+				const auto selected = cdfileList.getElementAt(idx);
+				// if selected starts with /dev/sr, it's a CD drive
+				if (selected.find("/dev/") == 0)
 				{
-					strncpy(changed_prefs.cdslots[0].name, element.c_str(), MAX_DPATH);
-					DISK_history_add(changed_prefs.cdslots[0].name, -1, HISTORY_CD, 0);
+					strncpy(changed_prefs.cdslots[0].name, selected.c_str(), MAX_DPATH);
 					changed_prefs.cdslots[0].inuse = true;
-					changed_prefs.cdslots[0].type = SCSI_UNIT_DEFAULT;
-					lstMRUCDList.erase(lstMRUCDList.begin() + idx);
-					lstMRUCDList.insert(lstMRUCDList.begin(), changed_prefs.cdslots[0].name);
-					RefreshCDListModel();
-					bIgnoreListChange = true;
-					cboCDFile->setSelected(0);
-					bIgnoreListChange = false;
-					SetLastActiveConfig(element.c_str());
+					changed_prefs.cdslots[0].type = SCSI_UNIT_IOCTL;
+				}
+				else
+				{
+					const auto element = get_full_path_from_disk_list(selected);
+					if (element != changed_prefs.cdslots[0].name)
+					{
+						strncpy(changed_prefs.cdslots[0].name, element.c_str(), MAX_DPATH);
+						DISK_history_add(changed_prefs.cdslots[0].name, -1, HISTORY_CD, 0);
+						changed_prefs.cdslots[0].inuse = true;
+						changed_prefs.cdslots[0].type = SCSI_UNIT_DEFAULT;
+						lstMRUCDList.erase(lstMRUCDList.begin() + idx);
+						lstMRUCDList.insert(lstMRUCDList.begin(), changed_prefs.cdslots[0].name);
+						RefreshCDListModel();
+						bIgnoreListChange = true;
+						cboCDFile->setSelected(0);
+						bIgnoreListChange = false;
+						if (!last_loaded_config[0])
+							set_last_active_config(element.c_str());
+					}
 				}
 			}
 		}
-
-		RefreshPanelHD();
-		RefreshPanelQuickstart();
+		refresh_all_panels();
 	}
 };
 
@@ -445,7 +467,7 @@ public:
 				whdload_auto_prefs(&changed_prefs, whdload_prefs.whdload_filename.c_str());
 
 				AdjustDropDownControls();
-				SetLastActiveConfig(whdload_prefs.whdload_filename.c_str());
+				set_last_active_config(whdload_prefs.whdload_filename.c_str());
 			}
 			cmdWhdloadSelect->requestFocus();
 		}
@@ -473,6 +495,9 @@ public:
 					bIgnoreListChange = false;
 				}
 				whdload_auto_prefs(&changed_prefs, whdload_prefs.whdload_filename.c_str());
+
+				AdjustDropDownControls();
+				set_last_active_config(whdload_prefs.whdload_filename.c_str());
 			}
 		}
 		refresh_all_panels();
@@ -549,9 +574,10 @@ public:
 	void action(const gcn::ActionEvent& actionEvent) override
 	{
 		int sub;
+		auto action = actionEvent.getSource();
 		for (auto i = 0; i < 2; ++i)
 		{
-			if (actionEvent.getSource() == chkqsDFx[i])
+			if (action == chkqsDFx[i])
 			{
 				//---------------------------------------
 				// Drive enabled/disabled
@@ -560,11 +586,8 @@ public:
 					changed_prefs.floppyslots[i].dfxtype = DRV_35_DD;
 				else
 					changed_prefs.floppyslots[i].dfxtype = DRV_NONE;
-
-				RefreshPanelFloppy();
-				RefreshPanelQuickstart();
 			}
-			else if (actionEvent.getSource() == chkqsDFxWriteProtect[i])
+			else if (action == chkqsDFxWriteProtect[i])
 			{
 				//---------------------------------------
 				// Write-protect changed
@@ -577,13 +600,14 @@ public:
 					isSelected())
 				{
 					// Failed to change write protection -> maybe filesystem doesn't support this
+					chkqsDFxWriteProtect[i]->setSelected(!chkqsDFxWriteProtect[i]->isSelected());
 					ShowMessage("Set/Clear write protect", "Failed to change write permission.",
 						"Maybe underlying filesystem doesn't support this.", "", "Ok", "");
 					chkqsDFxWriteProtect[i]->requestFocus();
 				}
 				DISK_reinsert(i);
 			}
-			else if (actionEvent.getSource() == cboqsDFxType[i])
+			else if (action == cboqsDFxType[i])
 			{
 				const auto selectedType = cboqsDFxType[i]->getSelected();
 				const int dfxtype = todfxtype(i, selectedType - 1, &sub);
@@ -592,7 +616,7 @@ public:
 				if (dfxtype == DRV_FB)
 				{
 					TCHAR tmp[32];
-					_stprintf(tmp, _T("%d:%s"), selectedType - 5, drivebridgeModes[selectedType - 6].data());
+					_sntprintf(tmp, sizeof tmp, _T("%d:%s"), selectedType - 5, drivebridgeModes[selectedType - 6].data());
 					_tcscpy(changed_prefs.floppyslots[i].dfxsubtypeid, tmp);
 				}
 				else
@@ -600,7 +624,7 @@ public:
 					changed_prefs.floppyslots[i].dfxsubtypeid[0] = 0;
 				}
 			}
-			else if (actionEvent.getSource() == cmdqsDFxInfo[i])
+			else if (action == cmdqsDFxInfo[i])
 			{
 				//---------------------------------------
 				// Show info about current disk-image
@@ -608,7 +632,7 @@ public:
 				if (changed_prefs.floppyslots[i].dfxtype != DRV_NONE && strlen(changed_prefs.floppyslots[i].df) > 0)
 					DisplayDiskInfo(i);
 			}
-			else if (actionEvent.getSource() == cmdqsDFxEject[i])
+			else if (action == cmdqsDFxEject[i])
 			{
 				//---------------------------------------
 				// Eject disk from drive
@@ -617,7 +641,7 @@ public:
 				strncpy(changed_prefs.floppyslots[i].df, "", MAX_DPATH);
 				AdjustDropDownControls();
 			}
-			else if (actionEvent.getSource() == cmdqsDFxSelect[i])
+			else if (action == cmdqsDFxSelect[i])
 			{
 				//---------------------------------------
 				// Select disk for drive
@@ -639,12 +663,13 @@ public:
 						RefreshDiskListModel();
 
 						AdjustDropDownControls();
-						SetLastActiveConfig(tmp.c_str());
+						if (!last_loaded_config[0])
+							set_last_active_config(tmp.c_str());
 					}
 				}
 				cmdqsDFxSelect[i]->requestFocus();
 			}
-			else if (actionEvent.getSource() == cboqsDFxFile[i])
+			else if (action == cboqsDFxFile[i])
 			{
 				//---------------------------------------
 				// Disk image from list selected
@@ -673,14 +698,14 @@ public:
 							bIgnoreListChange = true;
 							cboqsDFxFile[i]->setSelected(0);
 							bIgnoreListChange = false;
-							SetLastActiveConfig(element.c_str());
+							if (!last_loaded_config[0])
+								set_last_active_config(element.c_str());
 						}
 					}
 				}
 			}
-			RefreshPanelFloppy();
-			RefreshPanelQuickstart();
 		}
+		refresh_all_panels();
 	}
 };
 
@@ -688,7 +713,6 @@ static QSDiskActionListener* qs_diskActionListener;
 
 void InitPanelQuickstart(const config_category& category)
 {
-	int posX;
 	int posY = DISTANCE_BORDER;
 
 	amigaModelList.clear();
@@ -696,21 +720,10 @@ void InitPanelQuickstart(const config_category& category)
 		amigaModelList.add(amodels[i].name);
 
 	amigaConfigList.clear();
-	diskfileList.clear();
-	for(const auto & i : lstMRUDiskList)
-	{
-		const std::string full_path = i;
-		const std::string filename = full_path.substr(full_path.find_last_of("/\\") + 1);
-		diskfileList.add(std::string(filename).append(" { ").append(full_path).append(" }"));
-	}
 
-	cdfileList.clear();
-	for(const auto & i : lstMRUCDList)
-	{
-		const std::string full_path = i;
-		const std::string filename = full_path.substr(full_path.find_last_of("/\\") + 1);
-		cdfileList.add(std::string(filename).append(" { ").append(full_path).append(" }"));
-	}
+	RefreshDiskListModel();
+	RefreshCDListModel();
+	RefreshWhdListModel();
 
 	quickstartActionListener = new QuickstartActionListener();
 	qs_diskActionListener = new QSDiskActionListener();
@@ -889,7 +902,7 @@ void InitPanelQuickstart(const config_category& category)
 
 	for (auto i = 0; i < 2; ++i)
 	{
-		posX = DISTANCE_BORDER;
+		int posX = DISTANCE_BORDER;
 		category.panel->add(chkqsDFx[i], posX, posY);
 		posX += chkqsDFx[i]->getWidth() + DISTANCE_NEXT_X;
 		category.panel->add(cboqsDFxType[i], posX, posY);
@@ -929,6 +942,7 @@ void InitPanelQuickstart(const config_category& category)
 	cmdCDEject->setVisible(false);
 	cmdCDSelect->setVisible(false);
 	cboCDFile->setVisible(false);
+	cboCDFile->clearSelected();
 
 	bIgnoreListChange = false;
 
@@ -1000,12 +1014,14 @@ static void AdjustDropDownControls()
 		}
 	}
 
-	cboCDFile->clearSelected();
-	if (changed_prefs.cdslots[0].inuse && strlen(changed_prefs.cdslots[0].name) > 0)
+	if (changed_prefs.cdslots[0].inuse
+		&& strlen(changed_prefs.cdslots[0].name) > 0
+		&& changed_prefs.cdslots[0].type == SCSI_UNIT_DEFAULT)
 	{
+		cboCDFile->clearSelected();
 		for (auto i = 0; i < static_cast<int>(lstMRUCDList.size()); ++i)
 		{
-			if (lstMRUCDList[i].c_str() != changed_prefs.cdslots[0].name)
+			if (strcmp(lstMRUCDList[i].c_str(), changed_prefs.cdslots[0].name) == 0)
 			{
 				cboCDFile->setSelected(i);
 				break;
@@ -1053,8 +1069,8 @@ void RefreshPanelQuickstart()
 		else
 			chkqsDFx[i]->setEnabled(prev_available);
 
-		cmdqsDFxInfo[i]->setEnabled(drive_enabled && nn < 5 && disk_in_drive);
 		chkqsDFxWriteProtect[i]->setEnabled(drive_enabled && !changed_prefs.floppy_read_only && nn < 5);
+		cmdqsDFxInfo[i]->setEnabled(drive_enabled && nn < 5 && disk_in_drive);
 		cmdqsDFxEject[i]->setEnabled(drive_enabled && nn < 5 && disk_in_drive);
 		cmdqsDFxSelect[i]->setEnabled(drive_enabled && nn < 5);
 		cboqsDFxFile[i]->setEnabled(drive_enabled && nn < 5);

@@ -68,6 +68,7 @@ set(SOURCE_FILES
         src/luascript.cpp
         src/main.cpp
         src/memory.cpp
+        src/mos6502.cpp
         src/midiemu.cpp
         src/native2amiga.cpp
         src/ncr9x_scsi.cpp
@@ -194,6 +195,12 @@ set(SOURCE_FILES
         src/caps/caps_amiberry.cpp
         src/dsp3210/dsp_glue.cpp
         src/dsp3210/DSP3210_emulation.cpp
+        src/kbmcu/8048/co8048.cpp
+        src/kbmcu/keyboard_mcu_6500_1.cpp
+        src/kbmcu/keyboard_mcu_6805.cpp
+        src/kbmcu/keyboard_mcu_d8039hlc.cpp
+        src/kbmcu/m6805/m68_ops.cpp
+        src/kbmcu/m6805/m68emu.cpp
         src/machdep/support.cpp
         src/mame/a2410.cpp
         src/mame/tm34010/tms34010.cpp
@@ -222,6 +229,7 @@ set(SOURCE_FILES
         src/osdep/amiberry_serial.cpp
         src/osdep/amiberry_uaenet.cpp
         src/osdep/amiberry_whdbooter.cpp
+        src/osdep/blkdev_ioctl.cpp
         src/osdep/ioport.cpp
         src/osdep/sigsegv_handler.cpp
         src/osdep/socket.cpp
@@ -261,6 +269,7 @@ set(SOURCE_FILES
         src/pcem/vid_et4000.cpp
         src/pcem/vid_et4000w32.cpp
         src/pcem/vid_inmos.cpp
+        src/pcem/vid_mga.cpp
         src/pcem/vid_ncr.cpp
         src/pcem/vid_permedia2.cpp
         src/pcem/vid_s3.cpp
@@ -269,6 +278,7 @@ set(SOURCE_FILES
         src/pcem/vid_sdac_ramdac.cpp
         src/pcem/vid_svga.cpp
         src/pcem/vid_svga_render.cpp
+        src/pcem/vid_tvp3026_ramdac.cpp
         src/pcem/vid_voodoo.cpp
         src/pcem/vid_voodoo_banshee.cpp
         src/pcem/vid_voodoo_banshee_blitter.cpp
@@ -324,6 +334,7 @@ set(SOURCE_FILES
         src/osdep/gui/SelectFolder.cpp
         src/osdep/gui/SelectFile.cpp
         src/osdep/gui/CreateFilesysHardfile.cpp
+        src/osdep/gui/EditCDDrive.cpp
         src/osdep/gui/EditFilesysVirtual.cpp
         src/osdep/gui/EditFilesysHardfile.cpp
         src/osdep/gui/EditFilesysHardDrive.cpp
@@ -396,7 +407,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE_BUNDLE_NAME "Amiberry"
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-        MACOSX_BUNDLE_COPYRIGHT "(c) 2016-2024 Dimitris Panokostas"
+        MACOSX_BUNDLE_COPYRIGHT "(c) 2016-2025 Dimitris Panokostas"
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -431,32 +442,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         external/mt32emu/src
         external/floppybridge/src
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        SDL2
-        SDL2_image
-        SDL2_ttf
-        guisan
-        mt32emu
-        ${DBUS_LIBRARIES}
-        FLAC
-        ${PORTMIDI_LIBRARIES}
-        png
-        MPG123::libmpg123
-        ${LIBMPEG2_LIBRARIES}
-        ${LIBMPEG2_CONVERT_LIBRARIES}
-        ${LIBSERIALPORT_LIBRARIES}
-        ${LIBENET_LIBRARIES}
-        z
-        pthread
-        dl
-)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(${PROJECT_NAME} PRIVATE rt)
-endif ()
-
-# Add dependencies to ensure external libraries are built
-add_dependencies(${PROJECT_NAME} mt32emu floppybridge capsimage guisan)
 
 # Install the executable
 install(TARGETS ${PROJECT_NAME}

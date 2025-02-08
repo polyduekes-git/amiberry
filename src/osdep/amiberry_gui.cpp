@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <strings.h>
 #include <cstring>
@@ -130,7 +131,7 @@ void addromfiles(UAEREG* fkey, gcn::DropDown* d, const TCHAR* path, int type1, i
 	TCHAR tmp[MAX_DPATH];
 	TCHAR tmp2[MAX_DPATH];
 	TCHAR seltmp[MAX_DPATH];
-	struct romdata* rdx = NULL;
+	struct romdata* rdx = nullptr;
 	struct romdataentry* rde = xcalloc(struct romdataentry, MAX_ROMMGR_ROMS);
 	int ridx = 0;
 
@@ -188,7 +189,7 @@ void addromfiles(UAEREG* fkey, gcn::DropDown* d, const TCHAR* path, int type1, i
 			int jpri = rde[j].priority;
 			const TCHAR* jname = rde[j].name;
 			if ((ipri > jpri) || (ipri == jpri && _tcsicmp(iname, jname) > 0)) {
-				struct romdataentry rdet;
+				struct romdataentry rdet{};
 				memcpy(&rdet, &rde[i], sizeof(struct romdataentry));
 				memcpy(&rde[i], &rde[j], sizeof(struct romdataentry));
 				memcpy(&rde[j], &rdet, sizeof(struct romdataentry));
@@ -196,17 +197,16 @@ void addromfiles(UAEREG* fkey, gcn::DropDown* d, const TCHAR* path, int type1, i
 		}
 	}
 
-	auto listmodel = d->getListModel(); //xSendDlgItemMessage(hDlg, d, CB_RESETCONTENT, 0, 0);
+	auto listmodel = d->getListModel();
 	listmodel->clear();
-	listmodel->add(""); //xSendDlgItemMessage(hDlg, d, CB_ADDSTRING, 0, (LPARAM)_T(""));
+	listmodel->add("");
 	for (int i = 0; i < ridx; i++) {
 		struct romdataentry* rdep = &rde[i];
-		listmodel->add(rdep->name); //xSendDlgItemMessage(hDlg, d, CB_ADDSTRING, 0, (LPARAM)rdep->name);
+		listmodel->add(rdep->name);
 		xfree(rdep->name);
 	}
 	if (seltmp[0])
 	{
-		//xSendDlgItemMessage(hDlg, d, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)seltmp);
 		for (int i = 0; i < listmodel->getNumberOfElements(); i++) {
 			if (!_tcsicmp(listmodel->getElementAt(i).c_str(), seltmp)) {
 				d->setSelected(i);
@@ -216,7 +216,6 @@ void addromfiles(UAEREG* fkey, gcn::DropDown* d, const TCHAR* path, int type1, i
 	}
 	else
 	{
-		//SetDlgItemText(hDlg, d, path);
 		if (path && path[0])
 		{
 			listmodel->add(path);
@@ -230,14 +229,14 @@ void addromfiles(UAEREG* fkey, gcn::DropDown* d, const TCHAR* path, int type1, i
 static int extpri(const TCHAR* p, int size)
 {
 	const TCHAR* s = _tcsrchr(p, '.');
-	if (s == NULL)
+	if (s == nullptr)
 		return 80;
 	// if archive: lowest priority
 	if (!my_existsfile(p))
 		return 100;
 	int pri = 10;
 	// prefer matching size
-	struct mystat ms;
+	struct mystat ms{};
 	if (my_stat(p, &ms)) {
 		if (ms.size == size) {
 			pri--;
@@ -251,10 +250,10 @@ static int addrom(UAEREG* fkey, struct romdata* rd, const TCHAR* name)
 	TCHAR tmp1[MAX_DPATH], tmp2[MAX_DPATH], tmp3[MAX_DPATH];
 	char pathname[MAX_DPATH];
 
-	_stprintf(tmp1, _T("ROM_%03d"), rd->id);
+	_sntprintf(tmp1, sizeof tmp1, _T("ROM_%03d"), rd->id);
 	if (rd->group) {
 		TCHAR* p = tmp1 + _tcslen(tmp1);
-		_stprintf(p, _T("_%02d_%02d"), rd->group >> 16, rd->group & 65535);
+		_sntprintf(p, sizeof p, _T("_%02d_%02d"), rd->group >> 16, rd->group & 65535);
 	}
 	getromname(rd, tmp2);
 	pathname[0] = 0;
@@ -264,9 +263,9 @@ static int addrom(UAEREG* fkey, struct romdata* rd, const TCHAR* name)
 	}
 	if (rd->crc32 == 0xffffffff) {
 		if (rd->configname)
-			_stprintf(tmp2, _T(":%s"), rd->configname);
+			_sntprintf(tmp2, sizeof tmp2, _T(":%s"), rd->configname);
 		else
-			_stprintf(tmp2, _T(":ROM_%03d"), rd->id);
+			_sntprintf(tmp2, sizeof tmp2, _T(":ROM_%03d"), rd->id);
 	}
 	int size = sizeof tmp3 / sizeof(TCHAR);
 	if (regquerystr(fkey, tmp1, tmp3, &size)) {
@@ -300,7 +299,7 @@ struct romscandata {
 
 static struct romdata* scan_single_rom_2(struct zfile* f)
 {
-	uae_u8 buffer[20] = {0};
+	uae_u8 buffer[20] = {};
 	auto cl = 0;
 	struct romdata* rd = nullptr;
 
@@ -313,8 +312,7 @@ static struct romdata* scan_single_rom_2(struct zfile* f)
 	if (!memcmp(buffer, "KICK", 4))
 	{
 		zfile_fseek(f, 512, SEEK_SET);
-		if (size > 262144)
-			size = 262144;
+		size = std::min(size, 262144);
 	}
 	else if (!memcmp(buffer, "AMIROMTYPE1", 11))
 	{
@@ -367,7 +365,7 @@ struct romdata *scan_single_rom (const TCHAR *path)
 		return rd;
 	z = zfile_fopen (path, _T("rb"), ZFD_NORMAL);
 	if (!z)
-		return 0;
+		return nullptr;
 	return scan_single_rom_2 (z);
 }
 
@@ -380,7 +378,7 @@ static int isromext(const std::string& path, bool deepscan)
 		return 0;
 	const std::string ext = path.substr(ext_pos + 1);
 
-	static const std::vector<std::string> extensions = { "rom", "bin", "adf", "key", "a500", "a1200", "a4000", "cdtv", "cd32" };
+	static const std::vector<std::string> extensions = { "rom", "ROM", "roz", "ROZ", "bin", "BIN",  "a500", "A500", "a1200", "A1200", "a4000", "A4000", "cdtv", "CDTV", "cd32", "CD32" };
 	if (std::find(extensions.begin(), extensions.end(), ext) != extensions.end())
 		return 1;
 
@@ -427,7 +425,7 @@ static bool scan_rom_hook(const TCHAR* name, int line)
 
 static int scan_rom_2(struct zfile* f, void* vrsd)
 {
-	struct romscandata* rsd = (struct romscandata*)vrsd;
+	auto* rsd = static_cast<struct romscandata*>(vrsd);
 	const TCHAR* path = zfile_getname(f);
 	const TCHAR* romkey = _T("rom.key");
 	struct romdata* rd;
@@ -476,11 +474,6 @@ static int scan_rom(const std::string& path, UAEREG* fkey, bool deepscan)
 	return rsd.got;
 }
 
-void SymlinkROMs()
-{
-	symlink_roms(&changed_prefs);
-}
-
 static int listrom(const int* roms)
 {
 	int i;
@@ -495,7 +488,7 @@ static int listrom(const int* roms)
 	return 0;
 }
 
-static void show_rom_list(void)
+static void show_rom_list()
 {
 	// TODO
 	//TCHAR* p;
@@ -579,7 +572,7 @@ static void show_rom_list(void)
 static int scan_roms_2(UAEREG* fkey, const TCHAR* path, bool deepscan, int level)
 {
 	struct dirent* entry;
-	struct stat statbuf;
+	struct stat statbuf{};
 	DIR* dp;
 	int ret = 0;
 
@@ -589,14 +582,14 @@ static int scan_roms_2(UAEREG* fkey, const TCHAR* path, bool deepscan, int level
 	write_log(_T("ROM scan directory '%s'\n"), path);
 
 	dp = opendir(path);
-	if (dp == NULL)
+	if (dp == nullptr)
 		return 0;
 
 	scan_rom_hook(path, 1);
 
-    while ((entry = readdir(dp)) != NULL) {
+    while ((entry = readdir(dp)) != nullptr) {
         TCHAR tmppath[MAX_DPATH];
-        _stprintf(tmppath, _T("%s/%s"), path, entry->d_name);
+        _sntprintf(tmppath, sizeof tmppath, _T("%s/%s"), path, entry->d_name);
 
         if (stat(tmppath, &statbuf) == -1)
             continue;
@@ -608,7 +601,7 @@ static int scan_roms_2(UAEREG* fkey, const TCHAR* path, bool deepscan, int level
             scan_roms_2(fkey, tmppath, deepscan, level + 1);
         }
 
-        if (!scan_rom_hook(NULL, 0))
+        if (!scan_rom_hook(nullptr, 0))
             break;
     }
 
@@ -625,7 +618,7 @@ static int scan_roms_3(UAEREG* fkey, TCHAR** paths, const TCHAR* path)
 	bool deepscan = true;
 
 	ret = 0;
-	scan_rom_hook(NULL, 0);
+	scan_rom_hook(nullptr, 0);
 	pathp[0] = 0;
 	realpath(path, pathp);
 	if (!pathp[0])
@@ -660,16 +653,16 @@ int scan_roms(int show)
 
 	ret = 0;
 
-	regdeletetree(NULL, _T("DetectedROMs"));
-	fkey = regcreatetree(NULL, _T("DetectedROMs"));
-	if (fkey == NULL)
+	regdeletetree(nullptr, _T("DetectedROMs"));
+	fkey = regcreatetree(nullptr, _T("DetectedROMs"));
+	if (fkey == nullptr)
 		goto end;
 
 	cnt = 0;
 	for (i = 0; i < MAX_ROM_PATHS; i++)
-		paths[i] = NULL;
-	scan_rom_hook(NULL, 0);
-	while (scan_rom_hook(NULL, 0)) {
+		paths[i] = nullptr;
+	scan_rom_hook(nullptr, 0);
+	while (scan_rom_hook(nullptr, 0)) {
 		keys = get_keyring();
 		get_rom_path(path, sizeof path / sizeof(TCHAR));
 		cnt += scan_roms_3(fkey, paths, path);
@@ -699,7 +692,7 @@ int scan_roms(int show)
 	for (i = 0; i < MAX_ROM_PATHS; i++)
 		xfree(paths[i]);
 
-	fkey2 = regcreatetree(NULL, _T("DetectedROMS"));
+	fkey2 = regcreatetree(nullptr, _T("DetectedROMS"));
 	if (fkey2) {
 		id = 1;
 		for (;;) {
@@ -707,7 +700,7 @@ int scan_roms(int show)
 			if (!rd)
 				break;
 			if (rd->crc32 == 0xffffffff)
-				addrom(fkey, rd, NULL);
+				addrom(fkey, rd, nullptr);
 			id++;
 		}
 		regclosetree(fkey2);
@@ -733,7 +726,7 @@ static void ClearConfigFileList()
 	ConfigFilesList.clear();
 }
 
-void ReadConfigFileList(void)
+void ReadConfigFileList()
 {
 	char path[MAX_DPATH];
 	std::vector<std::string> files;
@@ -771,9 +764,9 @@ void ReadConfigFileList(void)
 		// If the user has many (thousands) of configs, this will take a long time
 		if (amiberry_options.read_config_descriptions)
 		{
-			auto p = cfgfile_open(tmp->FullPath, NULL);
+			auto p = cfgfile_open(tmp->FullPath, nullptr);
 			if (p) {
-				cfgfile_get_description(p, NULL, tmp->Description, NULL, NULL, NULL, NULL, NULL);
+				cfgfile_get_description(p, nullptr, tmp->Description, nullptr, nullptr, nullptr, nullptr, nullptr);
 				cfgfile_close(p);
 			}
 		}
@@ -791,23 +784,97 @@ ConfigFileInfo* SearchConfigInList(const char* name)
 	return nullptr;
 }
 
-void disk_selection(const int drive, uae_prefs* prefs)
+void disk_selection(const int shortcut, uae_prefs* prefs)
 {
-	std::string tmp;
-
-	if (strlen(prefs->floppyslots[drive].df) > 0)
-		tmp = std::string(prefs->floppyslots[drive].df);
-	else
-		tmp = current_dir;
-	tmp = SelectFile("Select disk image file", tmp, diskfile_filter);
-	if (!tmp.empty())
+	// Select Floppy Disk Image
+	if (shortcut >= 0 && shortcut < 4)
 	{
-		if (strncmp(prefs->floppyslots[drive].df, tmp.c_str(), MAX_DPATH) != 0)
+		std::string tmp;
+		if (strlen(prefs->floppyslots[shortcut].df) > 0)
+			tmp = std::string(prefs->floppyslots[shortcut].df);
+		else
+			tmp = get_floppy_path();
+		tmp = SelectFile("Select disk image file", tmp, diskfile_filter);
+		if (!tmp.empty())
 		{
-			strncpy(prefs->floppyslots[drive].df, tmp.c_str(), MAX_DPATH);
-			disk_insert(drive, tmp.c_str());
-			add_file_to_mru_list(lstMRUDiskList, tmp);
-			current_dir = extract_path(tmp);
+			if (strncmp(prefs->floppyslots[shortcut].df, tmp.c_str(), MAX_DPATH) != 0)
+			{
+				strncpy(prefs->floppyslots[shortcut].df, tmp.c_str(), MAX_DPATH);
+				disk_insert(shortcut, tmp.c_str());
+				add_file_to_mru_list(lstMRUDiskList, tmp);
+			}
+		}
+	}
+	else if (shortcut == 4)
+	{
+		// Load a Save state
+		TCHAR tmp[MAX_DPATH];
+		get_savestate_path(tmp, sizeof tmp / sizeof(TCHAR));
+
+		const std::string selected = SelectFile("Load a save state file", tmp, statefile_filter);
+		if (!selected.empty())
+		{
+			_tcscpy(savestate_fname, selected.c_str());
+			savestate_initsave(savestate_fname, 1, true, true);
+			savestate_state = STATE_DORESTORE;
+
+			const auto filename = extract_filename(savestate_fname);
+			screenshot_filename = get_screenshot_path();
+			screenshot_filename += filename;
+			screenshot_filename = remove_file_extension(screenshot_filename);
+			screenshot_filename += ".png";
+		}
+		else {
+			savestate_fname[0] = 0;
+		}
+	}
+	else if (shortcut == 5)
+	{
+		// Save a state
+		TCHAR tmp[MAX_DPATH];
+		get_savestate_path(tmp, sizeof tmp / sizeof(TCHAR));
+
+		std::string selected = SelectFile("Save a save state file", tmp, statefile_filter, true);
+		if (!selected.empty())
+		{
+			// ensure the selected filename ends with .uss
+			if (selected.size() < 4 || selected.substr(selected.size() - 4) != ".uss")
+			{
+				selected += ".uss";
+			}
+
+			_tcscpy(savestate_fname, selected.c_str());
+			_tcscat(tmp, savestate_fname);
+			save_state(savestate_fname, _T("Description!"));
+			if (create_screenshot())
+			{
+				const auto filename = extract_filename(savestate_fname);
+				screenshot_filename = get_screenshot_path();
+				screenshot_filename += filename;
+				screenshot_filename = remove_file_extension(screenshot_filename);
+				screenshot_filename += ".png";
+				save_thumb(screenshot_filename);
+			}
+		}
+	}
+	// Select CD Image
+	else if (shortcut == 6)
+	{
+		std::string tmp;
+		if (prefs->cdslots[0].inuse && strlen(prefs->cdslots[0].name) > 0)
+			tmp = std::string(prefs->cdslots[0].name);
+		else
+			tmp = get_cdrom_path();
+		tmp = SelectFile("Select CD image file", tmp, cdfile_filter);
+		if (!tmp.empty())
+		{
+			if (strncmp(prefs->cdslots[0].name, tmp.c_str(), MAX_DPATH) != 0)
+			{
+				strncpy(prefs->cdslots[0].name, tmp.c_str(), MAX_DPATH);
+				changed_prefs.cdslots[0].inuse = true;
+				changed_prefs.cdslots[0].type = SCSI_UNIT_DEFAULT;
+				add_file_to_mru_list(lstMRUCDList, tmp);
+			}
 		}
 	}
 }
@@ -912,32 +979,32 @@ void gui_purge_events()
 	keybuf_init();
 }
 
-int gui_update()
+void gui_update()
 {
+	if (current_state_num == 99) return;
+
 	std::string filename;
-	std::string suffix = (current_state_num >= 1 && current_state_num <= 14) ?
+	const std::string suffix = current_state_num >= 1 && current_state_num <= 14 ?
 		"-" + std::to_string(current_state_num) : "";
 
 	if (strlen(currprefs.floppyslots[0].df) > 0)
 		filename = extract_filename(currprefs.floppyslots[0].df);
 	else if (currprefs.cdslots[0].inuse && strlen(currprefs.cdslots[0].name) > 0)
 		filename = extract_filename(currprefs.cdslots[0].name);
+	else if (!whdload_prefs.whdload_filename.empty())
+		filename = extract_filename(whdload_prefs.whdload_filename);
+	else if (strlen(last_active_config) > 0)
+		filename = std::string(last_active_config) + ".uss";
 	else
-	{
-		last_loaded_config[0] != '\0' ? filename = std::string(last_loaded_config) : filename = "default.uae";
-	}
+		return;
 
 	get_savestate_path(savestate_fname, MAX_DPATH - 1);
 	strncat(savestate_fname, filename.c_str(), MAX_DPATH - 1);
 	remove_file_extension(savestate_fname);
 	strncat(savestate_fname, (suffix + ".uss").c_str(), MAX_DPATH - 1);
 
-	screenshot_filename = get_screenshot_path();
-	screenshot_filename += filename;
-	screenshot_filename = remove_file_extension(screenshot_filename);
+	screenshot_filename = remove_file_extension(get_screenshot_path() + filename);
 	screenshot_filename.append(suffix + ".png");
-
-	return 0;
 }
 
 /* if drive is -1, show the full GUI, otherwise file-requester for DF[drive] */
@@ -968,7 +1035,7 @@ void gui_display(int shortcut)
 		gui_purge_events();
 		gui_active--;
 	}
-	else if (shortcut >= 0 && shortcut < 4)
+	else if (shortcut >= 0 && shortcut <= 6)
 	{
 		amiberry_gui_init();
 		gui_widgets_init();
@@ -1068,12 +1135,15 @@ void gui_flicker_led(int led, int unitnum, int status)
 	}
 }
 
-void gui_fps(int fps, int idle, int color)
+void gui_fps(int fps, int lines, bool lace, int idle, int color)
 {
 	gui_data.fps = fps;
+	gui_data.lines = lines;
+	gui_data.lace = lace;
 	gui_data.idle = idle;
 	gui_data.fps_color = color;
 	gui_led(LED_FPS, 0, -1);
+	gui_led(LED_LINES, 0, -1);
 	gui_led(LED_CPU, 0, -1);
 	gui_led(LED_SND, (gui_data.sndbuf_status > 1 || gui_data.sndbuf_status < 0) ? 0 : 1, -1);
 }
@@ -1182,7 +1252,7 @@ void gui_message(const char* format, ...)
 	va_list parms;
 
 	va_start(parms, format);
-	vsprintf(msg, format, parms);
+	_vsntprintf(msg, sizeof(msg), format, parms);
 	va_end(parms);
 
 	ShowMessage("", msg, "", "", "Ok", "");
@@ -1295,12 +1365,11 @@ void CreateDefaultDevicename(char* name)
 
 	while (!foundFree && freeNum < 10)
 	{
-		sprintf(name, "DH%d", freeNum);
+		_sntprintf(name, sizeof name, "DH%d", freeNum);
 		foundFree = !DevicenameExists(name);
 		++freeNum;
 	}
 }
-
 
 int tweakbootpri(int bp, int ab, int dnm)
 {
@@ -1384,10 +1453,12 @@ void default_rdb_hfdlg(struct hfdlg_vals* f, const TCHAR* filename)
 	hardfile_testrdb(f);
 }
 
-void updatehdfinfo(bool force, bool defaults, bool realdrive)
+void updatehdfinfo(bool force, bool defaults, bool realdrive, std::string& txtHdfInfo, std::string& txtHdfInfo2)
 {
-	uae_u8 id[512] = { 0 };
-	uae_u32 i;
+	uae_u8 id[512] = { };
+	uae_u32 blocks, cyls, i;
+	TCHAR tmp[200], tmp2[200];
+	TCHAR idtmp[17];
 	bool phys = is_hdf_rdb();
 
 	uae_u64 bsize = 0;
@@ -1451,12 +1522,61 @@ void updatehdfinfo(bool force, bool defaults, bool realdrive)
 		if (current_hfdlg.ci.unit_feature_level == HD_LEVEL_ATA_1 && bsize >= 4 * static_cast<uae_u64>(0x40000000))
 			current_hfdlg.ci.unit_feature_level = HD_LEVEL_ATA_2;
 	}
+
+	cyls = phys ? current_hfdlg.ci.pcyls : current_hfdlg.forcedcylinders;
+	int heads = phys ? current_hfdlg.ci.pheads : current_hfdlg.ci.surfaces;
+	int secs = phys ? current_hfdlg.ci.psecs : current_hfdlg.ci.sectors;
+	if (!cyls && current_hfdlg.ci.blocksize && secs && heads) {
+		cyls = (uae_u32)(bsize / ((uae_u64)current_hfdlg.ci.blocksize * secs * heads));
+	}
+	blocks = cyls * (secs * heads);
+	if (!blocks && current_hfdlg.ci.blocksize)
+		blocks = (uae_u32)(bsize / current_hfdlg.ci.blocksize);
+	if (current_hfdlg.ci.max_lba)
+		blocks = (uae_u32)current_hfdlg.ci.max_lba;
+
+	for (i = 0; i < sizeof (idtmp) / sizeof (TCHAR) - 1; i++) {
+		TCHAR c = id[i];
+		if (c < 32 || c > 126)
+			c = '.';
+		idtmp[i] = c;
+		idtmp[i + 1] = 0;
+	}
+
+	tmp[0] = 0;
+	if (bsize) {
+		_sntprintf (tmp2, sizeof tmp2, _T(" %s [%02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X]"), idtmp,
+			id[0], id[1], id[2], id[3], id[4], id[5], id[6], id[7],
+			id[8], id[9], id[10], id[11], id[12], id[13], id[14], id[15]);
+		if (!blocks) {
+			_sntprintf (tmp, sizeof tmp, _T("%uMB"), (unsigned int)(bsize / (1024 * 1024)));
+		} else if (blocks && !cyls) {
+			_sntprintf (tmp, sizeof tmp, _T("%u blocks, %.1fMB"),
+				blocks,
+				(double)bsize / (1024.0 * 1024.0));
+		} else {
+			_sntprintf (tmp, sizeof tmp, _T("%u/%u/%u, %u/%u blocks, %.1fMB/%.1fMB"),
+				cyls, heads, secs,
+				blocks, (int)(bsize / current_hfdlg.ci.blocksize),
+				(double)blocks * 1.0 * current_hfdlg.ci.blocksize / (1024.0 * 1024.0),
+				(double)bsize / (1024.0 * 1024.0));
+			if ((uae_u64)cyls * heads * secs > bsize / current_hfdlg.ci.blocksize) {
+				_tcscat (tmp2, _T(" [Geometry larger than drive!]"));
+			} else if (cyls > 65535) {
+				_tcscat (tmp2, _T(" [Too many cyls]"));
+			}
+		}
+		if (txtHdfInfo.empty() && txtHdfInfo2.empty()) {
+			txtHdfInfo = std::string(tmp);
+			txtHdfInfo2 = std::string(tmp2);
+		}
+	}
 }
 
 void new_filesys(int entry)
 {
 	struct uaedev_config_data* uci;
-	struct uaedev_config_info ci;
+	struct uaedev_config_info ci{};
 	memcpy(&ci, &current_fsvdlg.ci, sizeof(struct uaedev_config_info));
 	uci = add_filesys_config(&changed_prefs, entry, &ci);
 	if (uci) {
@@ -1469,10 +1589,13 @@ void new_filesys(int entry)
 
 void new_cddrive(int entry)
 {
-	struct uaedev_config_info ci = { 0 };
+	struct uaedev_config_info ci{};
 	ci.device_emu_unit = 0;
 	ci.controller_type = current_cddlg.ci.controller_type;
 	ci.controller_unit = current_cddlg.ci.controller_unit;
+#ifdef AMIBERRY
+	_tcscpy(ci.rootdir, current_cddlg.ci.rootdir);
+#endif
 	ci.type = UAEDEV_CD;
 	ci.readonly = true;
 	ci.blocksize = 2048;
@@ -1482,7 +1605,7 @@ void new_cddrive(int entry)
 void new_tapedrive(int entry)
 {
 	struct uaedev_config_data* uci;
-	struct uaedev_config_info ci = { 0 };
+	struct uaedev_config_info ci{};
 	ci.controller_type = current_tapedlg.ci.controller_type;
 	ci.controller_unit = current_tapedlg.ci.controller_unit;
 	ci.readonly = current_tapedlg.ci.readonly;
@@ -1498,7 +1621,7 @@ void new_tapedrive(int entry)
 void new_hardfile(int entry)
 {
 	struct uaedev_config_data* uci;
-	struct uaedev_config_info ci;
+	struct uaedev_config_info ci{};
 	memcpy(&ci, &current_hfdlg.ci, sizeof(struct uaedev_config_info));
 	uci = add_filesys_config(&changed_prefs, entry, &ci);
 	if (uci) {
@@ -1539,14 +1662,14 @@ void addhdcontroller(const struct expansionromtype* erc, int firstid, int flags)
 		_tcscat(name, cbt->name);
 		_tcscat(name, _T(")"));
 	}
-	if (get_boardromconfig(&changed_prefs, erc->romtype, NULL) || get_boardromconfig(&changed_prefs, erc->romtype_extra, NULL)) {
-		std::string name_string = std::string(name);
+	if (get_boardromconfig(&changed_prefs, erc->romtype, nullptr) || get_boardromconfig(&changed_prefs, erc->romtype_extra, nullptr)) {
+		auto name_string = std::string(name);
 		controller.push_back({ firstid, name_string });
 		for (int j = 1; j < MAX_DUPLICATE_EXPANSION_BOARDS; j++) {
 			if (is_board_enabled(&changed_prefs, erc->romtype, j)) {
 				TCHAR tmp[MAX_DPATH];
-				_stprintf(tmp, _T("%s [%d]"), name, j + 1);
-				std::string tmp_string = std::string(tmp);
+				_sntprintf(tmp, sizeof tmp, _T("%s [%d]"), name, j + 1);
+				auto tmp_string = std::string(tmp);
 				controller.push_back({ firstid + j * HD_CONTROLLER_NEXT_UNIT, tmp_string });
 			}
 		}
@@ -1588,9 +1711,9 @@ void inithdcontroller(int ctype, int ctype_unit, int devtype, bool media)
 		int ports = 2 + (ert ? ert->extrahdports : 0);
 		for (int i = 0; i < ports; i += 2) {
 			TCHAR tmp[100];
-			_stprintf(tmp, _T("%d"), i + 0);
+			_sntprintf(tmp, sizeof tmp, _T("%d"), i + 0);
 			controller_unit.push_back({ std::string(tmp) });
-			_stprintf(tmp, _T("%d"), i + 1);
+			_sntprintf(tmp, sizeof tmp, _T("%d"), i + 1);
 			controller_unit.push_back({ std::string(tmp) });
 		}
 		//if (media)
@@ -1623,7 +1746,7 @@ void inithdcontroller(int ctype, int ctype_unit, int devtype, bool media)
 	else if (ctype == HD_CONTROLLER_TYPE_UAE) {
 		for (int i = 0; i < MAX_FILESYSTEM_UNITS; i++) {
 			TCHAR tmp[100];
-			_stprintf(tmp, _T("%d"), i);
+			_sntprintf(tmp, sizeof tmp, _T("%d"), i);
 			controller_unit.push_back({ std::string(tmp) });
 		}
 		//if (media)
@@ -1654,7 +1777,7 @@ void inithdcontroller(int ctype, int ctype_unit, int devtype, bool media)
 	}
 }
 
-bool isguiactive(void)
+bool isguiactive()
 {
 	return gui_active > 0;
 }
@@ -1747,7 +1870,7 @@ void DisplayDiskInfo(int num)
 	char linebuffer[512];
 
 	DISK_examine_image(&changed_prefs, num, &di, true, nullptr);
-	DISK_validate_filename(&changed_prefs, changed_prefs.floppyslots[num].df, num, tmp1, 0, NULL, NULL, NULL);
+	DISK_validate_filename(&changed_prefs, changed_prefs.floppyslots[num].df, num, tmp1, 0, nullptr, nullptr, nullptr);
 	extract_filename(tmp1, nameonly);
 	snprintf(title, MAX_DPATH - 1, "Info for %s", nameonly);
 
@@ -1782,9 +1905,9 @@ void DisplayDiskInfo(int num)
 	for (int i = 0; i < 1024; i += w) {
 		for (int j = 0; j < w; j++) {
 			uae_u8 b = di.bootblock[i + j];
-			sprintf(linebuffer + j * 3, _T("%02X "), b);
+			_sntprintf(linebuffer + j * 3, sizeof(linebuffer) - j * 3, "%02X ", b);
 			if (b >= 32 && b < 127)
-				linebuffer[w * 3 + 1 + j] = (char)b;
+				linebuffer[w * 3 + 1 + j] = static_cast<char>(b);
 			else
 				linebuffer[w * 3 + 1 + j] = '.';
 		}

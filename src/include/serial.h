@@ -13,8 +13,10 @@
 #include "uae/types.h"
 
 #ifdef AMIBERRY
+#ifdef USE_LIBSERIALPORT
 #include <libserialport.h>
 extern int check(sp_return result);
+#endif
 #endif
 
 extern void serial_init (void);
@@ -54,7 +56,7 @@ extern void uaeser_clearbuffers (void*);
 extern void enet_writeser (uae_u16);
 extern int enet_readseravail (void);
 extern int enet_readser (uae_u16 *buffer);
-extern int enet_open (TCHAR *name);
+extern int enet_open (const TCHAR *name);
 extern void enet_close (void);
 
 #endif /* UAE_SERIAL_H */

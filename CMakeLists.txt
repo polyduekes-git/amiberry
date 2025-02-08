@@ -9,16 +9,25 @@ endif ()
 option(USE_GPIOD "Use GPIOD" OFF)
 # Use DBUS to control the emulator?
 option(USE_DBUS "Use DBus" OFF)
-# Use OpenGL for rendering?
+# Use OpenGL for rendering? NOTE: Not yet implemented
 option(USE_OPENGL "Use OpenGL" OFF)
 # Enable Link Time Optimization?
 option(WITH_LTO "Enable Link Time Optimization" OFF)
 
+# Use LibSerialPort for serial port emulation?
+option(USE_LIBSERIALPORT "Use LibSerialPort" ON)
+# Use LibENET for network emulation?
+option(USE_LIBENET "Use LibENET" ON)
+# Use PortMidi for MIDI emulation?
+option(USE_PORTMIDI "Use PortMidi" ON)
+# Use LibMPEG2 for MPEG2 decoding (CD32 FMV)?
+option(USE_LIBMPEG2 "Use LibMPEG2" ON)
+
 ## Determine proper semantic version
 set(VERSION_MAJOR "7")
 set(VERSION_MINOR "0")
-set(VERSION_PATCH "0")
-set(VERSION_PRE_RELEASE "RC1")
+set(VERSION_PATCH "3")
+set(VERSION_PRE_RELEASE "")
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
@@ -38,7 +47,7 @@ set(PROJECT_COMPANY_NAMESPACE "com.blitterstudio")  # Reverse domain name notati
 include(GNUInstallDirs)
 
 include(cmake/StandardProjectSettings.cmake)
-include(cmake/Dependencies.cmake)
 include(cmake/SourceFiles.cmake)
+include(cmake/Dependencies.cmake)
 
 add_subdirectory(packaging)

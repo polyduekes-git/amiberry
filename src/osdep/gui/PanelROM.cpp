@@ -49,24 +49,22 @@ void handleROMSelection(const gcn::ActionEvent& actionEvent, char* prefs)
 
 static void getromfile(gcn::DropDown* d, TCHAR* path, int size)
 {
-	auto val = d->getSelected(); //LRESULT val = xSendDlgItemMessage(hDlg, d, CB_GETCURSEL, 0, 0L);
+	auto val = d->getSelected();
 	if (val == -1) {
-		//xSendDlgItemMessage(hDlg, d, WM_GETTEXT, (WPARAM)size, (LPARAM)path);
 		auto listmodel = d->getListModel();
 		listmodel->add(path);
 		val = listmodel->getNumberOfElements() - 1;
 		d->setSelected(val);
 	}
 	else {
-		struct romdata* rd;
 		auto listmodel = d->getListModel();
 		std::string tmp1 = listmodel->getElementAt(val);
 		path[0] = 0;
-		rd = getromdatabyname(tmp1.c_str());
+		struct romdata* rd = getromdatabyname(tmp1.c_str());
 		if (rd) {
 			struct romlist* rl = getromlistbyromdata(rd);
 			if (rd->configname)
-				_stprintf(path, _T(":%s"), rd->configname);
+				_sntprintf(path, sizeof path, _T(":%s"), rd->configname);
 			else if (rl)
 				_tcsncpy(path, rl->path, size);
 		}
@@ -267,17 +265,15 @@ void ExitPanelROM()
 
 void RefreshPanelROM()
 {
-	UAEREG* fkey = regcreatetree(NULL, _T("DetectedROMs"));
-
-	load_keyring(&changed_prefs, NULL);
-
+	// Load the ROMs
+	UAEREG* fkey = regcreatetree(nullptr, _T("DetectedROMs"));
+	load_keyring(&changed_prefs, nullptr);
 	addromfiles(fkey, cboMainROM, changed_prefs.romfile,
 		ROMTYPE_KICK | ROMTYPE_KICKCD32, 0);
 	addromfiles(fkey, cboExtROM, changed_prefs.romextfile,
 		ROMTYPE_EXTCD32 | ROMTYPE_EXTCDTV | ROMTYPE_ARCADIABIOS | ROMTYPE_ALG, 0);
 	addromfiles(fkey, cboCartROM, changed_prefs.cartfile,
 		ROMTYPE_FREEZER | ROMTYPE_ARCADIAGAME | ROMTYPE_CD32CART, 0);
-
 	regclosetree(fkey);
 
 	//TODO add flashfile and rtcfile options

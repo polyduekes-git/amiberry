@@ -416,9 +416,9 @@ static void voodoo_writel(uint32_t addr, uint32_t val, void *p)
                 
                 case SST_swapbufferCMD:
                 voodoo->cmd_written++;
-                thread_lock_mutex(voodoo->swap_mutex);
+                thread_wait_mutex(voodoo->swap_mutex);
                 voodoo->swap_count++;
-                thread_unlock_mutex(voodoo->swap_mutex);
+                thread_release_mutex(voodoo->swap_mutex);
                 if (voodoo->fbiInit7 & FBIINIT7_CMDFIFO_ENABLE)
                         return;
                 voodoo_queue_command(voodoo, addr | FIFO_WRITEL_REG, val);
@@ -499,9 +499,9 @@ static void voodoo_writel(uint32_t addr, uint32_t val, void *p)
                         if ((voodoo->fbiInit1 & FBIINIT1_VIDEO_RESET) && !(val & FBIINIT1_VIDEO_RESET))
                         {
                                 voodoo->line = 0;
-                                thread_lock_mutex(voodoo->swap_mutex);
+                                thread_wait_mutex(voodoo->swap_mutex);
                                 voodoo->swap_count = 0;
-                                thread_unlock_mutex(voodoo->swap_mutex);
+                                thread_release_mutex(voodoo->swap_mutex);
                                 voodoo->retrace_count = 0;
                         }
                         voodoo->fbiInit1 = (val & ~5) | (voodoo->fbiInit1 & 5);
@@ -861,7 +861,7 @@ static void voodoo_add_status_info(char *s, int max_len, void *p)
                 (voodoo->pixel_count_old[0] + voodoo->pixel_count_old[1] + voodoo->pixel_count_old[2] + voodoo->pixel_count_old[3]);
         texel_count_total = (texel_count_current[0] + texel_count_current[1] + texel_count_current[2] + texel_count_current[3]) -
                 (voodoo->texel_count_old[0] + voodoo->texel_count_old[1] + voodoo->texel_count_old[2] + voodoo->texel_count_old[3]);
-        sprintf(temps, "%f Mpixels/sec (%f)\n%f Mtexels/sec (%f)\n%f ktris/sec\n%f%% CPU (%f%% real)\n%d frames/sec (%i)\n%f%% CPU (%f%% real)\n"/*%d reads/sec\n%d write/sec\n%d tex/sec\n*/,
+        _sntprintf(temps, sizeof temps, "%f Mpixels/sec (%f)\n%f Mtexels/sec (%f)\n%f ktris/sec\n%f%% CPU (%f%% real)\n%d frames/sec (%i)\n%f%% CPU (%f%% real)\n"/*%d reads/sec\n%d write/sec\n%d tex/sec\n*/,
                 (double)pixel_count_total/1000000.0,
                 ((double)pixel_count_total/1000000.0) / ((double)render_time[0] / status_diff),
                 (double)texel_count_total/1000000.0,
@@ -870,32 +870,32 @@ static void voodoo_add_status_info(char *s, int max_len, void *p)
                 ((double)voodoo->render_time[0] * 100.0) / timer_freq, ((double)voodoo->render_time[0] * 100.0) / status_diff);
         if (voodoo->render_threads >= 2)
         {
-                sprintf(temps2, "%f%% CPU (%f%% real)\n",
+                _sntprintf(temps2, sizeof temps2, "%f%% CPU (%f%% real)\n",
                         ((double)voodoo->render_time[1] * 100.0) / timer_freq, ((double)voodoo->render_time[1] * 100.0) / status_diff);
                 strncat(temps, temps2, sizeof(temps)-1);
         }
         if (voodoo->render_threads == 4)
         {
-                sprintf(temps2, "%f%% CPU (%f%% real)\n%f%% CPU (%f%% real)\n",
+                _sntprintf(temps2, sizeof temps2, "%f%% CPU (%f%% real)\n%f%% CPU (%f%% real)\n",
                         ((double)voodoo->render_time[2] * 100.0) / timer_freq, ((double)voodoo->render_time[2] * 100.0) / status_diff,
                         ((double)voodoo->render_time[3] * 100.0) / timer_freq, ((double)voodoo->render_time[3] * 100.0) / status_diff);
                 strncat(temps, temps2, sizeof(temps)-1);
         }
         if (voodoo_set->nr_cards == 2)
         {
-                sprintf(temps2, "%f%% CPU (%f%% real)\n",
+                _sntprintf(temps2, sizeof temps2, "%f%% CPU (%f%% real)\n",
                         ((double)voodoo_slave->render_time[0] * 100.0) / timer_freq, ((double)voodoo_slave->render_time[0] * 100.0) / status_diff);
                 strncat(temps, temps2, sizeof(temps)-1);
                         
                 if (voodoo_slave->render_threads >= 2)
                 {
-                        sprintf(temps2, "%f%% CPU (%f%% real)\n",
+                        _sntprintf(temps2, sizeof temps2, "%f%% CPU (%f%% real)\n",
                                 ((double)voodoo_slave->render_time[1] * 100.0) / timer_freq, ((double)voodoo_slave->render_time[1] * 100.0) / status_diff);
                         strncat(temps, temps2, sizeof(temps)-1);
                 }
                 if (voodoo_slave->render_threads == 4)
                 {
-                        sprintf(temps2, "%f%% CPU (%f%% real)\n%f%% CPU (%f%% real)\n",
+                        _sntprintf(temps2, sizeof temps2, "%f%% CPU (%f%% real)\n%f%% CPU (%f%% real)\n",
                                 ((double)voodoo_slave->render_time[2] * 100.0) / timer_freq, ((double)voodoo_slave->render_time[2] * 100.0) / status_diff,
                                 ((double)voodoo_slave->render_time[3] * 100.0) / timer_freq, ((double)voodoo_slave->render_time[3] * 100.0) / status_diff);
                         strncat(temps, temps2, sizeof(temps)-1);
@@ -1216,7 +1216,7 @@ void *voodoo_2d3d_card_init(int type)
         return voodoo;
 }
 
-void *voodoo_init()
+void *voodoo_init(const device_t *info)
 {
         voodoo_set_t *voodoo_set = (voodoo_set_t*)malloc(sizeof(voodoo_set_t));
         uint32_t tmuConfig = 1;
@@ -1525,13 +1525,12 @@ static device_config_t voodoo_config[] =
 
 device_t voodoo_device =
 {
-        "3DFX Voodoo Graphics",
-        DEVICE_PCI,
+        "3DFX Voodoo Graphics", NULL,
+        DEVICE_PCI, 0,
         voodoo_init,
         voodoo_close,
         NULL,
-        voodoo_speed_changed,
         NULL,
-        voodoo_add_status_info,
-        voodoo_config
+        voodoo_speed_changed,
+        NULL
 };

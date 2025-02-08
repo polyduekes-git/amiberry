@@ -160,8 +160,10 @@ static void set_fpucw_x87(uae_u32 m68k_cw)
 
 static void native_set_fpucw(uae_u32 m68k_cw)
 {
+#ifndef __MACH__
 #if defined(CPU_i386) || defined(CPU_x86_64)
 	set_fpucw_x87(m68k_cw);
+#endif
 #endif
 }
 
@@ -575,21 +577,21 @@ static const TCHAR *fp_print(fpdata *fpd, int mode)
 	if (mode < 0) {
 		uae_u32 w1, w2, w3;
 		fp_from_exten(fpd, &w1, &w2, &w3);
-		_stprintf(fsout, _T("%04X-%08X-%08X"), w1 >> 16, w2, w3);
+		_sntprintf(fsout, sizeof fsout, _T("%04X-%08X-%08X"), w1 >> 16, w2, w3);
 		return fsout;
 	}
 
 	n = signbit(fpd->fp) ? 1 : 0;
 
 	if(isinf(fpd->fp)) {
-		_stprintf(fsout, _T("%c%s"), n ? '-' : '+', _T("inf"));
+		_sntprintf(fsout, sizeof fsout, _T("%c%s"), n ? '-' : '+', _T("inf"));
 	} else if(isnan(fpd->fp)) {
-		_stprintf(fsout, _T("%c%s"), n ? '-' : '+', _T("nan"));
+		_sntprintf(fsout, sizeof fsout, _T("%c%s"), n ? '-' : '+', _T("nan"));
 	} else {
 #ifdef USE_LONG_DOUBLE
-		_stprintf(fsout, _T("#%Le"), fpd->fp);
+		_sntprintf(fsout, sizeof fsout, _T("#%Le"), fpd->fp);
 #else
-		_stprintf(fsout, _T("#%e"), fpd->fp);
+		_sntprintf(fsout, sizeof fsout, _T("#%e"), fpd->fp);
 #endif
 	}
 	if (mode == 0 || mode > _tcslen(fsout))
@@ -690,12 +692,16 @@ static void fp_int(fpdata *a, fpdata *b)
     {
         case FPCR_ROUND_NEAR:
             a->fp = fp_round_to_nearest(bb);
+            break;
         case FPCR_ROUND_ZERO:
             a->fp = fp_round_to_zero(bb);
+            break;
         case FPCR_ROUND_MINF:
             a->fp = fp_round_to_minus_infinity(bb);
+            break;
         case FPCR_ROUND_PINF:
             a->fp = fp_round_to_plus_infinity(bb);
+            break;
         default: /* never reached */
 		break;
     }
@@ -1099,9 +1105,9 @@ static void fp_from_pack (fpdata *src, uae_u32 *wrd, int kfactor)
 	fp_to_native(&fp, src);
 
 #ifdef USE_LONG_DOUBLE
-	sprintf (str, "%#.17Le", fp);
+	_sntprintf (str, sizeof str, "%#.17Le", fp);
 #else
-	sprintf (str, "%#.17e", fp);
+	_sntprintf (str, sizeof str, "%#.17e", fp);
 #endif
 	
 	// get exponent
@@ -1148,10 +1154,8 @@ static void fp_from_pack (fpdata *src, uae_u32 *wrd, int kfactor)
 		ndigits = kfactor;
 	}
 
-	if (ndigits < 0)
-		ndigits = 0;
-	if (ndigits > 16)
-		ndigits = 16;
+	ndigits = std::max(ndigits, 0);
+	ndigits = std::min(ndigits, 16);
 
 	// remove decimal point
 	strp[1] = strp[0];

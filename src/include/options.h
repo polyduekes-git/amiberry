@@ -20,7 +20,7 @@
 
 #define UAEMAJOR 7
 #define UAEMINOR 0
-#define UAESUBREV 0
+#define UAESUBREV 3
 
 #define MAX_AMIGADISPLAYS 1
 
@@ -531,6 +531,16 @@ struct monconfig
 	struct wh gfx_size_fs_xtra[GFX_SIZE_EXTRA_NUM];
 };
 
+#define KB_DISCONNECTED -1
+#define KB_UAE 0
+#define KB_A500_6570 1
+#define KB_A600_6570 2
+#define KB_A1000_6500 3
+#define KB_A1000_6570 4
+#define KB_A1200_6805 5
+#define KB_A2000_8039 6
+#define KB_Ax000_6570 7
+
 #ifdef AMIBERRY
 enum custom_type
 {
@@ -595,7 +605,6 @@ struct whdload_slave
 struct whdload_options
 {
 	std::string whdload_filename;
-
 	std::string filename;
 	std::string game_name;
 	std::string sub_path;
@@ -729,6 +738,7 @@ struct uae_prefs
 	int gfx_overscanmode;
 	int gfx_monitorblankdelay;
 	int gfx_rotation;
+	uae_u32 gfx_bordercolor;
 
 	struct gfx_filterdata gf[3];
 
@@ -740,7 +750,9 @@ struct uae_prefs
 	float blitter_speed_throttle;
 	unsigned int chipset_mask;
 	bool chipset_hr;
-	bool keyboard_connected;
+	bool display_calibration;
+	int keyboard_mode;
+	bool keyboard_nkro;
 	bool ntscmode;
 	bool genlock;
 	int genlock_image;
@@ -881,6 +893,7 @@ struct uae_prefs
 	struct cdslot cdslots[MAX_TOTAL_SCSI_DEVICES];
 	TCHAR quitstatefile[MAX_DPATH];
 	TCHAR statefile[MAX_DPATH];
+	TCHAR statefile_path[MAX_DPATH];
 	TCHAR inprecfile[MAX_DPATH];
 	TCHAR trainerfile[MAX_DPATH];
 	bool inprec_autoplay;
@@ -1140,14 +1153,17 @@ extern bool is_error_log(void);
 
 extern void default_prefs(struct uae_prefs*, bool, int);
 extern void discard_prefs(struct uae_prefs*, int);
-extern void copy_prefs(struct uae_prefs* src, struct uae_prefs* dst);
-extern void copy_inputdevice_prefs(struct uae_prefs *src, struct uae_prefs *dst);
+extern void copy_prefs(const struct uae_prefs* src, struct uae_prefs* dst);
+extern void copy_inputdevice_prefs(const struct uae_prefs *src, struct uae_prefs *dst);
 
 #ifdef AMIBERRY
 extern int bip_a500(struct uae_prefs* p, int rom);
 extern int bip_a500plus(struct uae_prefs* p, int rom);
+extern int bip_a600(struct uae_prefs* p, int rom);
+extern int bip_a1000(struct uae_prefs* p, int rom);
 extern int bip_a1200(struct uae_prefs* p, int rom);
 extern int bip_a2000(struct uae_prefs* p, int rom);
+extern int bip_a3000(struct uae_prefs* p, int rom);
 extern int bip_a4000(struct uae_prefs* p, int rom);
 extern int bip_cd32(struct uae_prefs* p, int rom);
 extern int bip_cdtv(struct uae_prefs* p, int rom);
@@ -1261,7 +1277,7 @@ extern void hardfile_testrdb(struct hfdlg_vals* hdf);
 extern void default_tapedlg(struct tapedlg_vals* f);
 extern void default_fsvdlg(struct fsvdlg_vals* f);
 extern void default_hfdlg(struct hfdlg_vals* f, bool rdb);
-extern void updatehdfinfo(bool force, bool defaults, bool realdrive);
+extern void updatehdfinfo(bool force, bool defaults, bool realdrive, std::string& txtHdfInfo, std::string& txtHdfInfo2);
 
 #ifdef AMIBERRY
 struct amiberry_customised_layout
@@ -1312,7 +1328,7 @@ struct amiberry_options
 	bool rctrl_as_ramiga = false;
 	bool gui_joystick_control = true;
 	bool default_multithreaded_drawing = true;
-	int default_line_mode = 0;
+	int default_line_mode = 1;
 	int input_default_mouse_speed = 100;
 	bool input_keyboard_as_joystick_stop_keypresses = false;
 	char default_open_gui_key[128] = "F12";

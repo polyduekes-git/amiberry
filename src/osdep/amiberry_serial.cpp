@@ -42,7 +42,10 @@
 #include "midiemu.h"
 #endif
 
+#ifdef USE_LIBSERIALPORT
 #include <libserialport.h>
+#endif
+#include <netinet/tcp.h>
 #include <sys/mman.h>
 
 #define SERIALLOGGING 0
@@ -66,7 +69,7 @@ struct sermap_buffer
 	volatile uae_u32 write_offset;
 	volatile uae_u32 data[SERMAP_SIZE];
 };
-static struct sermap_buffer* sermap1, * sermap2;
+static sermap_buffer* sermap1, * sermap2;
 static void* sermap_handle;
 static uae_u8* sermap_data;
 static bool sermap_master;
@@ -86,12 +89,10 @@ static int receive_buf_size, receive_buf_count;
 
 static void shmem_serial_send(uae_u32 data)
 {
-	uae_u32 v;
-
 	sermap1->active_write = true;
 	if (!sermap1->active_read)
 		return;
-	v = sermap1->write_offset;
+	uae_u32 v = sermap1->write_offset;
 	if (((v + 1) & (SERMAP_SIZE - 1)) == sermap1->read_offset) {
 		write_log(_T("Shared serial port memory overflow!\n"));
 		return;
@@ -101,24 +102,22 @@ static void shmem_serial_send(uae_u32 data)
 	v &= (SERMAP_SIZE - 1);
 	sermap1->write_offset = v;
 }
-static uae_u32 shmem_serial_receive(void)
+static uae_u32 shmem_serial_receive()
 {
-	uae_u32 v;
-	uae_u32 data;
 	sermap2->active_read = true;
 	if (!sermap2->active_write)
 		return 0xffffffff;
-	v = sermap2->read_offset;
+	uae_u32 v = sermap2->read_offset;
 	if (v == sermap2->write_offset)
 		return 0xffffffff;
-	data = sermap2->data[v];
+	const uae_u32 data = sermap2->data[v];
 	v++;
 	v &= (SERMAP_SIZE - 1);
 	sermap2->read_offset = v;
 	return data;
 }
 
-static void sermap_deactivate(void)
+static void sermap_deactivate()
 {
 	sermap_enabled = false;
 	sermap_flags = 0;
@@ -132,7 +131,7 @@ static void sermap_deactivate(void)
 	}
 }
 
-int shmem_serial_state(void)
+int shmem_serial_state()
 {
 	if (!sermap_handle)
 		return 0;
@@ -141,23 +140,23 @@ int shmem_serial_state(void)
 	return 2;
 }
 
-void shmem_serial_delete(void)
+void shmem_serial_delete()
 {
 	sermap_deactivate();
 	sermap_master = false;
 	if (sermap_data) {
-		munmap(sermap_data, sizeof(struct sermap_buffer) * 2);
+		munmap(sermap_data, sizeof(sermap_buffer) * 2);
 	}
 	if (sermap_handle) {
 		shm_unlink(SER_MEMORY_MAPPING);
 	}
-	sermap_data = NULL;
-	sermap_handle = NULL;
-	sermap1 = sermap2 = NULL;
+	sermap_data = nullptr;
+	sermap_handle = nullptr;
+	sermap1 = sermap2 = nullptr;
 }
 
 
-bool shmem_serial_create(void)
+bool shmem_serial_create()
 {
 	shmem_serial_delete();
 
@@ -175,13 +174,13 @@ bool shmem_serial_create(void)
 		write_log("Found already existing serial port shared memory\n");
 	}
 
-	if (ftruncate(fd, sizeof(struct sermap_buffer) * 2) == -1) {
+	if (ftruncate(fd, sizeof(sermap_buffer) * 2) == -1) {
 		perror("Failed to set size of shared memory");
 		close(fd);
 		return false;
 	}
 
-	sermap_data = (uae_u8*)mmap(NULL, sizeof(struct sermap_buffer) * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	sermap_data = static_cast<uae_u8*>(mmap(nullptr, sizeof(sermap_buffer) * 2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
 	if (sermap_data == MAP_FAILED) {
 		perror("Shared serial port memory mmap() failed");
 		close(fd);
@@ -191,14 +190,14 @@ bool shmem_serial_create(void)
 	close(fd);
 
 	if (sermap_master) {
-		sermap1 = (struct sermap_buffer*)sermap_data;
-		sermap2 = (struct sermap_buffer*)(sermap_data + sizeof(struct sermap_buffer));
+		sermap1 = reinterpret_cast<sermap_buffer*>(sermap_data);
+		sermap2 = reinterpret_cast<sermap_buffer*>(sermap_data + sizeof(sermap_buffer));
 		sermap1->version = version;
 		sermap2->version = version;
 	}
 	else {
-		sermap2 = (struct sermap_buffer*)sermap_data;
-		sermap1 = (struct sermap_buffer*)(sermap_data + sizeof(struct sermap_buffer));
+		sermap2 = reinterpret_cast<sermap_buffer*>(sermap_data);
+		sermap1 = reinterpret_cast<sermap_buffer*>(sermap_data + sizeof(sermap_buffer));
 		if (sermap2->version != version || sermap1->version != version) {
 			write_log("Shared serial port memory version mismatch %08x != %08x\n", sermap1->version, version);
 			shmem_serial_delete();
@@ -211,9 +210,11 @@ bool shmem_serial_create(void)
 
 #endif
 
+#ifdef USE_LIBSERIALPORT
 /* A pointer to a struct sp_port, which will refer to
  * the port found. */
 sp_port* port;
+#endif
 
 static int data_in_serdat; /* new data written to SERDAT */
 static evt_t data_in_serdat_delay;
@@ -245,13 +246,13 @@ int serial_enet;
 static bool seriallog_lf;
 extern int consoleopen;
 
-void serial_open (void);
-void serial_close (void);
+void serial_open ();
+void serial_close ();
 
 uae_u16 serper, serdat, serdatr;
 static bool serper_set = false;
 
-static const int allowed_baudrates[] =
+static constexpr int allowed_baudrates[] =
 {
 	0, 110, 300, 600, 1200, 2400, 4800, 9600, 14400,
 	19200, 31400, 38400, 57600, 115200, 128000, 256000, -1
@@ -281,8 +282,9 @@ static SOCKET serialsocket = UAE_SOCKET_INVALID;
 static SOCKET serialconn = UAE_SOCKET_INVALID;
 static BOOL tcpserial;
 
-static bool tcp_is_connected (void)
+static bool tcp_is_connected ()
 {
+#ifdef SERIAL_ENET
 	if (serialsocket == UAE_SOCKET_INVALID) {
 		return false;
 	}
@@ -291,24 +293,32 @@ static bool tcp_is_connected (void)
 			serialconn = uae_socket_accept(serialsocket);
 			if (serialconn != UAE_SOCKET_INVALID) {
 				write_log(_T("TCP: Serial connection accepted\n"));
+				int opt = 1;
+				setsockopt(serialsocket, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(int));
 			}
 		}
 	}
 	return serialconn != UAE_SOCKET_INVALID;
+#else
+	return false;
+#endif
 }
 
-static void tcp_disconnect (void)
+static void tcp_disconnect ()
 {
+#ifdef SERIAL_ENET
 	if (serialconn == UAE_SOCKET_INVALID) {
 		return;
 	}
 	uae_socket_close(serialconn);
 	serialconn = UAE_SOCKET_INVALID;
 	write_log(_T("TCP: Serial disconnect\n"));
+#endif
 }
 
-static void closetcp (void)
+static void closetcp ()
 {
+#ifdef SERIAL_ENET
 	if (serialconn != UAE_SOCKET_INVALID) {
 		uae_socket_close(serialconn);
 		serialconn = UAE_SOCKET_INVALID;
@@ -318,10 +328,12 @@ static void closetcp (void)
 		serialsocket = UAE_SOCKET_INVALID;
 	}
 	// WSACleanup ();
+#endif
 }
 
 static int opentcp (const TCHAR *sername)
 {
+#ifdef SERIAL_ENET
 	serialsocket = uae_tcp_listen_uri(sername, "1234", UAE_SOCKET_DEFAULT);
 	if (serialsocket == UAE_SOCKET_INVALID) {
 		return 0;
@@ -334,15 +346,16 @@ static int opentcp (const TCHAR *sername)
 	}
 	tcpserial = TRUE;
 	return 1;
+#else
+	return 0;
+#endif
 }
 
 int openser (const TCHAR *sername)
 {
-	if (!_tcsnicmp(sername, _T("TCP://"), 6)) {
-		return opentcp(sername + 6);
-	}
+#ifdef USE_LIBSERIALPORT
 	if (!_tcsnicmp(sername, _T("TCP:"), 4)) {
-		return opentcp(sername + 4);
+		return opentcp(sername);
 	}
 
 	if (sp_get_port_by_name(sername, &port) != SP_OK) {
@@ -353,7 +366,7 @@ int openser (const TCHAR *sername)
 	if (sp_open(port, SP_MODE_READ_WRITE) != SP_OK) {
 		write_log("Error opening serial port %s\n", sername);
 		sp_free_port(port);
-		port = NULL;
+		port = nullptr;
 		return 0;
 	}
 
@@ -362,7 +375,7 @@ int openser (const TCHAR *sername)
 	sp_set_parity(port, SP_PARITY_NONE);
 	sp_set_stopbits(port, 1);
 	sp_set_flowcontrol(port, SP_FLOWCONTROL_NONE);
-
+#endif
 	return 1;
 }
 
@@ -387,14 +400,16 @@ void closeser ()
 		midi_emu_close();
 	}
 #endif
-	if (port != NULL) {
+#ifdef USE_LIBSERIALPORT
+	if (port != nullptr) {
 		sp_close(port);
 		sp_free_port(port);
-		port = NULL;
+		port = nullptr;
 	}
+#endif
 }
 
-static void serial_rx_irq(void)
+static void serial_rx_irq()
 {
 	int delay = 9;
 	// Data in receive buffer
@@ -431,7 +446,7 @@ bool serreceive_external(uae_u16 v)
 	return true;
 }
 
-static void receive_next_buffered(void)
+static void receive_next_buffered()
 {
 	if (receive_buf && receive_buf_count > 0 && !(intreq & (1 << 11))) {
 		uae_u16 v = receive_buf[0];
@@ -443,7 +458,7 @@ static void receive_next_buffered(void)
 	}
 }
 
-void serial_rethink(void)
+void serial_rethink()
 {
 	if (data_in_serdatr) {
 		int sdr = data_in_serdatr;
@@ -518,6 +533,7 @@ int readser(int* buffer)
 		}
 		dataininput = 0;
 		dataininputcnt = 0;
+#ifdef USE_LIBSERIALPORT
 		if (port != nullptr) {
 			int bytes_available = sp_input_waiting(port);
 			if (bytes_available < 0) {
@@ -543,22 +559,25 @@ int readser(int* buffer)
 				return readser(buffer);
 			}
 		}
+#endif
 		return 0;
 	}
 }
 
-void flushser(void)
+void flushser()
 {
+#ifdef USE_LIBSERIALPORT
 	if (port) {
 		sp_flush(port, SP_BUF_INPUT);
 	}
 	else {
-		while (readseravail(NULL)) {
+		while (readseravail(nullptr)) {
 			int data;
 			if (readser(&data) <= 0)
 				break;
 		}
 	}
+#endif
 }
 
 int readseravail(bool* breakcond)
@@ -586,6 +605,7 @@ int readseravail(bool* breakcond)
 			return 0;
 		if (dataininput > dataininputcnt)
 			return 1;
+#ifdef USE_LIBSERIALPORT
 		if (port) {
 			if (breakcond && breakpending) {
 				*breakcond = true;
@@ -598,11 +618,12 @@ int readseravail(bool* breakcond)
 			}
 			return bytes_available;
 		}
+#endif
 	}
 	return 0;
 }
 
-static bool canreceive(void)
+static bool canreceive()
 {
 	// don't replace data in SERDATR until interrupt is cleared in safe receive mode
 	if (safe_receive) {
@@ -636,7 +657,7 @@ static bool canreceive(void)
 	return false;
 }
 
-static void checkreceive_enet(void)
+static void checkreceive_enet()
 {
 #ifdef SERIAL_ENET
 	uae_u16 recdata;
@@ -659,7 +680,7 @@ static void checkreceive_enet(void)
 #endif
 }
 
-static void checkreceive_serial (void)
+static void checkreceive_serial ()
 {
 #ifdef SERIAL_PORT
 	static int ninebitdata;
@@ -795,11 +816,11 @@ static void checkreceive_serial (void)
 #endif
 }
 
-static void outser(void)
+static void outser()
 {
 	if (datainoutput <= 0)
 		return;
-
+#ifdef USE_LIBSERIALPORT
 	memcpy(outputbufferout, outputbuffer, datainoutput);
 	int bytes_written = sp_blocking_write(port, outputbufferout, datainoutput, 1000);
 	if (bytes_written < 0) {
@@ -808,11 +829,11 @@ static void outser(void)
 	else if (bytes_written != datainoutput) {
 		write_log("Only wrote %d of %d bytes!\n", bytes_written, datainoutput);
 	}
-
+#endif
 	datainoutput = 0;
 }
 
-void writeser_flush(void)
+void writeser_flush()
 {
 	outser();
 }
@@ -822,21 +843,22 @@ void writeser(int c)
 	if (tcpserial) {
 		if (tcp_is_connected()) {
 			char buf[1];
-			buf[0] = (char) c;
+			buf[0] = static_cast<char>(c);
 			if (uae_socket_write(serialconn, buf, 1) != 1) {
 				tcp_disconnect();
 			}
 		}
 #ifdef WITH_MIDIEMU
 	} else if (midi_emu) {
-		uae_u8 b = (uae_u8)c;
+		auto b = static_cast<uae_u8>(c);
 		midi_emu_parse(&b, 1);
 #endif
 #ifdef WITH_MIDI
 	} else if (midi_ready) {
-		midi_send_byte((uint8_t) c);
+		midi_send_byte(static_cast<uint8_t>(c));
 #endif
 	} else {
+#ifdef USE_LIBSERIALPORT
 		if (!port || !currprefs.use_serial)
 			return;
 		if (datainoutput + 1 < sizeof(outputbuffer)) {
@@ -846,13 +868,16 @@ void writeser(int c)
 			datainoutput = 0;
 		}
 		outser();
+#endif
 	}
 }
 
 int checkserwrite(int spaceneeded)
 {
+#ifdef USE_LIBSERIALPORT
 	if (!port || !currprefs.use_serial)
 		return 1;
+#endif
 #ifdef WITH_MIDI
 	if (midi_ready) {
 		return 1;
@@ -865,9 +890,9 @@ int checkserwrite(int spaceneeded)
 	return 1;
 }
 
-static void serdatcopy(void);
+static void serdatcopy();
 
-static void checksend(void)
+static void checksend()
 {
 	if (data_in_sershift != 1 && data_in_sershift != 2) {
 		return;
@@ -939,7 +964,7 @@ end:
 #endif
 }
 
-static bool checkshiftempty(void)
+static bool checkshiftempty()
 {
 	writeser_flush();
 	checksend();
@@ -976,7 +1001,7 @@ static void sersend_ce(uae_u32 v)
 	}
 }
 
-static void serdatcopy(void)
+static void serdatcopy()
 {
 	if (data_in_sershift || !data_in_serdat)
 		return;
@@ -997,7 +1022,7 @@ static void serdatcopy(void)
 				write_log(_T("%s:"), ts);
 			seriallog_lf = false;
 		}
-		TCHAR ch = docharlog(serdatshift_masked);
+		const TCHAR ch = docharlog(serdatshift_masked);
 		write_log(_T("%c"), ch);
 		if (ch == 10)
 			seriallog_lf = true;
@@ -1056,7 +1081,7 @@ static void serdatcopy(void)
 
 		if (lastbitcycle_active_hsyncs) {
 			// if last bit still transmitting, add remaining time.
-			int extraper = (int)((lastbitcycle - get_cycles()) / CYCLE_UNIT);
+			int extraper = static_cast<int>((lastbitcycle - get_cycles()) / CYCLE_UNIT);
 			per += extraper;
 		}
 
@@ -1073,7 +1098,7 @@ static void serdatcopy(void)
 	checksend();
 }
 
-void serial_hsynchandler (void)
+void serial_hsynchandler ()
 {
 	// We handle this in ahi_hsync() instead
 #ifndef AMIBERRY
@@ -1087,7 +1112,7 @@ void serial_hsynchandler (void)
 #ifdef ARCADIA
 	if (alg_flag || currprefs.genlock_image >= 7) {
 		if (can) {
-			int ch = ld_serial_write();
+			const int ch = ld_serial_write();
 			if (ch >= 0) {
 				serdatr = ch | 0x100;
 				serial_rx_irq();
@@ -1105,7 +1130,7 @@ void serial_hsynchandler (void)
 		}
 	}
 	if (seriallog > 1 && !data_in_serdatr && gotlogwrite) {
-		int ch = read_log();
+		const int ch = read_log();
 		if (ch > 0) {
 			serdatr = ch | 0x100;
 			serial_rx_irq();
@@ -1122,7 +1147,7 @@ void serial_hsynchandler (void)
 					break;
 				}
 				if (!(v & 0xffff0000)) {
-					serdatr = (uae_u16)v;
+					serdatr = static_cast<uae_u16>(v);
 					serial_rx_irq();
 					break;
 				} else if ((v & 0x80000000) == 0x80000000) {
@@ -1186,6 +1211,7 @@ void serial_hsynchandler (void)
 
 void setserstat(int mask, int onoff)
 {
+#ifdef USE_LIBSERIALPORT
 	if (mask & SP_FLOWCONTROL_DTRDSR)
 	{
 		if (currprefs.use_serial && port != nullptr)
@@ -1205,6 +1231,7 @@ void setserstat(int mask, int onoff)
 			}
 		}
 	}
+#endif
 }
 
 int setbaud(int baud, int org_baud)
@@ -1240,10 +1267,12 @@ int setbaud(int baud, int org_baud)
 #endif
 	if (!currprefs.use_serial)
 		return 1;
+#ifdef USE_LIBSERIALPORT
 	if (port != nullptr)
 	{
 		check(sp_set_baudrate(port, baud));
 	}
+#endif
 	return 1;
 }
 
@@ -1327,10 +1356,10 @@ void SERPER(uae_u16 w)
 		evt_t c = get_cycles();
 		evt_t n = serper_tx_evt + serper_tx_cycles * CYCLE_UNIT;
 		if (n > c) {
-			int cycles_transmitted = (int)((c - serper_tx_evt) / CYCLE_UNIT);
+			const int cycles_transmitted = static_cast<int>((c - serper_tx_evt) / CYCLE_UNIT);
 			serper_tx_cycles -= cycles_transmitted;
 			if (serper_tx_cycles >= 0) {
-				int serper_tx_cycles_mod = serper_tx_cycles % serper_tx_per;
+				const int serper_tx_cycles_mod = serper_tx_cycles % serper_tx_per;
 				serper_tx_cycles /= serper_tx_per;
 				serper_tx_per = (serper & 0x7fff) + 1;
 				serper_tx_cycles *= serper_tx_per;
@@ -1344,7 +1373,7 @@ void SERPER(uae_u16 w)
 
 static void SERDAT_send(uae_u32 v)
 {
-	uae_u16 w = (uae_u16)v;
+	auto w = static_cast<uae_u16>(v);
 #if SERIALDEBUG > 2
 	write_log(_T("SERIAL: SERDAT write 0x%04x (%c) PC=%x\n"), w, dochar(w), M68K_GETPC);
 #endif
@@ -1383,7 +1412,7 @@ static void SERDAT_send(uae_u32 v)
 	}
 }
 
-uae_u16 SERDATR(void)
+uae_u16 SERDATR()
 {
 	serdatr &= 0x03ff;
 	if (!data_in_serdat && (!ser_accurate || (ser_accurate && get_cycles() >= data_in_serdat_delay))) {
@@ -1406,7 +1435,7 @@ uae_u16 SERDATR(void)
 		if (break_in_serdatr < 0) {
 			serdatr |= 0x0800;
 		} else if (diff > 0) {
-			int bit = (int)(c - serdatshift_start) / per;
+			const int bit = static_cast<int>(c - serdatshift_start) / per;
 			if (bit > 0 && !(serdatshift & (1 << (bit - 1)))) {
 				serdatr |= 0x0800;
 			}
@@ -1447,7 +1476,7 @@ void serial_rbf_change(bool set)
 	ovrun = set;
 }
 
-void serial_dtr_on(void)
+void serial_dtr_on()
 {
 #if SERIALHSDEBUG > 0
 	write_log("SERIAL: DTR on\n");
@@ -1461,11 +1490,13 @@ void serial_dtr_on(void)
 #ifdef SERIAL_PORT
 	if (currprefs.serial_demand)
 		serial_open();
+#ifdef USE_LIBSERIALPORT
 	setserstat(SP_FLOWCONTROL_DTRDSR, dtr);
+#endif
 #endif
 }
 
-void serial_dtr_off(void)
+void serial_dtr_off()
 {
 #if SERIALHSDEBUG > 0
 	write_log("SERIAL: DTR off\n");
@@ -1479,11 +1510,13 @@ void serial_dtr_off(void)
 #ifdef SERIAL_PORT
 	if (currprefs.serial_demand)
 		serial_close();
+#ifdef USE_LIBSERIALPORT
 	setserstat(SP_FLOWCONTROL_DTRDSR, dtr);
+#endif
 #endif
 }
 
-void serial_flush_buffer (void)
+void serial_flush_buffer ()
 {
 }
 
@@ -1500,6 +1533,7 @@ static void serial_status_debug(const TCHAR* s)
 
 uae_u8 serial_readstatus(uae_u8 v, uae_u8 dir)
 {
+#ifdef USE_LIBSERIALPORT
 	sp_signal signal;
 	uae_u8 serbits = oldserbits;
 
@@ -1628,6 +1662,9 @@ uae_u8 serial_readstatus(uae_u8 v, uae_u8 dir)
 
 	v = (v & (0x80 | 0x40 | 0x02 | 0x01)) | serbits;
 	return v;
+#else
+	return 0;
+#endif
 }
 
 uae_u8 serial_writestatus(uae_u8 newstate, uae_u8 dir)
@@ -1644,6 +1681,7 @@ uae_u8 serial_writestatus(uae_u8 newstate, uae_u8 dir)
 			else
 				serial_dtr_on();
 		}
+#ifdef USE_LIBSERIALPORT
 		if (!currprefs.serial_hwctsrts && currprefs.serial_rtsctsdtrdtecd && (dir & 0x40)) {
 			if ((oldserbits ^ newstate) & 0x40) {
 				if (newstate & 0x40) {
@@ -1659,6 +1697,7 @@ uae_u8 serial_writestatus(uae_u8 newstate, uae_u8 dir)
 				}
 			}
 		}
+#endif
 	}
 
 	if (logcnt > 0) {
@@ -1716,7 +1755,7 @@ uae_u8 serial_writestatus(uae_u8 newstate, uae_u8 dir)
 	return oldserbits;
 }
 
-static int enet_is(TCHAR* name)
+static int enet_is(const TCHAR* name)
 {
 	return !_tcsnicmp(name, _T("ENET:"), 5);
 }
@@ -1727,7 +1766,7 @@ void serial_open()
 	if (serdev)
 		return;
 	serper = 0;
-	if (0) {
+	if (false) {
 #ifdef SERIAL_ENET
 	}
 	else if (enet_is(currprefs.sername)) {
@@ -1771,7 +1810,7 @@ void serial_open()
 #endif
 }
 
-void serial_close(void)
+void serial_close()
 {
 #ifdef SERIAL_PORT
 	closeser();
@@ -1790,7 +1829,7 @@ void serial_close(void)
 #endif
 	if (receive_buf) {
 		xfree(receive_buf);
-		receive_buf = NULL;
+		receive_buf = nullptr;
 	}
 	receive_buf_size = 0;
 	receive_buf_count = 0;
@@ -1803,7 +1842,7 @@ void serial_close(void)
 	data_in_serdat_delay = 0;
 }
 
-void serial_init(void)
+void serial_init()
 {
 #ifdef SERIAL_PORT
 	if (!currprefs.use_serial)
@@ -1813,7 +1852,7 @@ void serial_init(void)
 #endif
 }
 
-void serial_exit (void)
+void serial_exit ()
 {
 #ifdef SERIAL_PORT
 	serial_close();
@@ -1835,9 +1874,12 @@ void serial_uartbreak (int v)
 		shmem_serial_send(0x40000000 | (v ? 0x20000 : 0x10000));
 	}
 #endif
+#ifdef USE_LIBSERIALPORT
 	if (!port || !currprefs.use_serial)
 		return;
+#endif
 #ifdef SERIAL_PORT
+#ifdef USE_LIBSERIALPORT
 	if (v)
 	{
 		check(sp_start_break(port));
@@ -1847,8 +1889,10 @@ void serial_uartbreak (int v)
 		check(sp_end_break(port));
 	}
 #endif
+#endif
 }
 
+#ifdef USE_LIBSERIALPORT
 /* Helper function for error handling. */
 int check(const sp_return result)
 {
@@ -1874,6 +1918,7 @@ int check(const sp_return result)
 		return result;
 	}
 }
+#endif
 
 #ifdef SERIAL_ENET
 static ENetHost* enethost, * enetclient;
@@ -1886,12 +1931,11 @@ static void enet_service(int serveronly)
 {
 	ENetEvent evt;
 	ENetAddress address;
-	int got;
 
 	if (enetmode == 0)
 		return;
 
-	got = 1;
+	int got = 1;
 	while (got) {
 		got = 0;
 		if (enetmode > 0) {
@@ -1904,7 +1948,7 @@ static void enet_service(int serveronly)
 					write_log(_T("ENET_SERVER: connect from %d.%d.%d.%d:%u\n"),
 						(address.host >> 0) & 0xff, (address.host >> 8) & 0xff, (address.host >> 16) & 0xff, (address.host >> 24) & 0xff,
 						address.port);
-					evt.peer->data = 0;
+					evt.peer->data = nullptr;
 					break;
 				case ENET_EVENT_TYPE_RECEIVE:
 				{
@@ -1925,6 +1969,7 @@ static void enet_service(int serveronly)
 						(address.host >> 0) & 0xff, (address.host >> 8) & 0xff, (address.host >> 16) & 0xff, (address.host >> 24) & 0xff,
 						address.port);
 					break;
+				default: break;
 				}
 			}
 		}
@@ -1965,39 +2010,38 @@ static void enet_disconnect(ENetPeer* peer)
 
 			case ENET_EVENT_TYPE_DISCONNECT:
 				write_log(_T("ENET_CLIENT: disconnection succeeded\n"));
-				enetpeer = NULL;
+				enetpeer = nullptr;
 				return;
+			default: break;
 			}
 		}
 	}
 	write_log(_T("ENET_CLIENT: disconnection forced\n"));
 	enet_peer_reset(enetpeer);
-	enetpeer = NULL;
+	enetpeer = nullptr;
 }
 
-void enet_close(void)
+void enet_close()
 {
 	enet_disconnect(enetpeer);
 	if (enetclient)
 		enet_host_destroy(enetclient);
-	enetclient = NULL;
+	enetclient = nullptr;
 	if (enethost)
 		enet_host_destroy(enethost);
-	enethost = NULL;
+	enethost = nullptr;
 	serial_enet = 0;
 	enetmode = 0;
 }
 
-int enet_open(TCHAR* name)
+int enet_open(const TCHAR* name)
 {
 	ENetAddress address;
-	ENetPacket* p;
 	static int initialized;
 	uae_u8 data[16];
-	int cnt;
 
 	if (!initialized) {
-		int err = enet_initialize();
+		const int err = enet_initialize();
 		if (err) {
 			write_log(_T("ENET: initialization failed: %d\n"), err);
 			return 0;
@@ -2011,7 +2055,7 @@ int enet_open(TCHAR* name)
 		address.host = ENET_HOST_ANY;
 		address.port = 1234;
 		enethost = enet_host_create(&address, 2, 0, 0, 0);
-		if (enethost == NULL) {
+		if (enethost == nullptr) {
 			write_log(_T("ENET_SERVER: enet_host_create(server) failed\n"));
 			enet_close();
 			return 0;
@@ -2022,8 +2066,8 @@ int enet_open(TCHAR* name)
 	else {
 		enetmode = -1;
 	}
-	enetclient = enet_host_create(NULL, 1, 0, 0, 0);
-	if (enetclient == NULL) {
+	enetclient = enet_host_create(nullptr, 1, 0, 0, 0);
+	if (enetclient == nullptr) {
 		write_log(_T("ENET_CLIENT: enet_host_create(client) failed\n"));
 		enet_close();
 		return 0;
@@ -2032,15 +2076,15 @@ int enet_open(TCHAR* name)
 	enet_address_set_host(&address, enetmode > 0 ? "127.0.0.1" : "192.168.0.10");
 	address.port = 1234;
 	enetpeer = enet_host_connect(enetclient, &address, 2, 0);
-	if (enetpeer == NULL) {
+	if (enetpeer == nullptr) {
 		write_log(_T("ENET_CLIENT: connection to host %d.%d.%d.%d:%d failed\n"),
 			(address.host >> 0) & 0xff, (address.host >> 8) & 0xff, (address.host >> 16) & 0xff, (address.host >> 24) & 0xff, address.port);
 		enet_host_destroy(enetclient);
-		enetclient = NULL;
+		enetclient = nullptr;
 	}
 	write_log(_T("ENET_CLIENT: connecting to %d.%d.%d.%d:%d...\n"),
 		(address.host >> 0) & 0xff, (address.host >> 8) & 0xff, (address.host >> 16) & 0xff, (address.host >> 24) & 0xff, address.port);
-	cnt = 10 * 5;
+	int cnt = 10 * 5;
 	while (cnt-- > 0) {
 		ENetEvent evt;
 		enet_service(0);
@@ -2055,7 +2099,7 @@ int enet_open(TCHAR* name)
 		return 0;
 	}
 	memcpy(data, "UAE_HELLO", 10);
-	p = enet_packet_create(data, sizeof data, ENET_PACKET_FLAG_RELIABLE);
+	ENetPacket* p = enet_packet_create(data, sizeof data, ENET_PACKET_FLAG_RELIABLE);
 	enet_peer_send(enetpeer, 0, p);
 	enet_host_flush(enetclient);
 	write_log(_T("ENET: connected\n"));
@@ -2065,19 +2109,18 @@ int enet_open(TCHAR* name)
 
 void enet_writeser(uae_u16 w)
 {
-	ENetPacket* p;
 	uae_u8 data[16];
 
 	memcpy(data, "UAE_", 4);
 	data[4] = w >> 8;
 	data[5] = w >> 0;
 	write_log(_T("W=%04X "), w);
-	p = enet_packet_create(data, 6, ENET_PACKET_FLAG_RELIABLE);
+	ENetPacket* p = enet_packet_create(data, 6, ENET_PACKET_FLAG_RELIABLE);
 	enet_peer_send(enetpeer, 0, p);
 	enet_host_flush(enetclient);
 }
 
-int enet_readseravail(void)
+int enet_readseravail()
 {
 	enet_service(0);
 	return enet_receive_off_r != enet_receive_off_w;

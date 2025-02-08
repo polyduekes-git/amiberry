@@ -46,7 +46,8 @@ class TapeDriveActionListener : public gcn::ActionListener
 public:
 	void action(const gcn::ActionEvent& actionEvent) override
 	{
-		if (actionEvent.getSource() == cmdTapeDriveOK)
+		auto source = actionEvent.getSource();
+		if (source == cmdTapeDriveOK)
 		{
 			if (txtTapeDrivePath->getText().empty())
 			{
@@ -56,12 +57,12 @@ public:
 			dialogResult = true;
 			dialogFinished = true;
 		}
-		else if (actionEvent.getSource() == cmdTapeDriveCancel)
+		else if (source == cmdTapeDriveCancel)
 		{
 			dialogResult = false;
 			dialogFinished = true;
 		}
-		else if (actionEvent.getSource() == cmdTapeDriveSelectDir)
+		else if (source == cmdTapeDriveSelectDir)
 		{
 			wndEditTapeDrive->releaseModalFocus();
 			std::string path;
@@ -82,7 +83,7 @@ public:
 			}
 			wndEditTapeDrive->requestModalFocus();
 		}
-		else if (actionEvent.getSource() == cmdTapeDriveSelectFile)
+		else if (source == cmdTapeDriveSelectFile)
 		{
 			wndEditTapeDrive->releaseModalFocus();
 			std::string path;
@@ -103,14 +104,14 @@ public:
 			}
 			wndEditTapeDrive->requestModalFocus();
 		}
-		else if (actionEvent.getSource() == cboTapeDriveController)
+		else if (source == cboTapeDriveController)
 		{
 			auto posn = controller[cboTapeDriveController->getSelected()].type;
 			current_tapedlg.ci.controller_type = posn % HD_CONTROLLER_NEXT_UNIT;
 			current_tapedlg.ci.controller_type_unit = posn / HD_CONTROLLER_NEXT_UNIT;
 			inithdcontroller(current_tapedlg.ci.controller_type, current_tapedlg.ci.controller_type_unit, UAEDEV_TAPE, current_tapedlg.ci.rootdir[0] != 0);
 		}
-		else if (actionEvent.getSource() == cboTapeDriveUnit)
+		else if (source == cboTapeDriveUnit)
 		{
 			current_tapedlg.ci.controller_unit = cboTapeDriveUnit->getSelected();
 		}
@@ -193,7 +194,6 @@ static void InitEditTapeDrive()
 	cboTapeDriveUnit->addActionListener(tapeDriveActionListener);
 
 	int posY = DISTANCE_BORDER;
-	int posX = DISTANCE_BORDER;
 
 	wndEditTapeDrive->add(lblTapeDrivePath, DISTANCE_BORDER, posY);
 	wndEditTapeDrive->add(txtTapeDrivePath, lblTapeDrivePath->getX() + lblTapeDrivePath->getWidth() + 8, posY);
@@ -507,7 +507,6 @@ bool EditTapeDrive(const int unit_no)
 	const AmigaMonitor* mon = &AMonitors[0];
 
 	mountedinfo mi{};
-	uaedev_config_data* uci;
 
 	dialogResult = false;
 	dialogFinished = false;
@@ -528,7 +527,7 @@ bool EditTapeDrive(const int unit_no)
 
 	if (unit_no >= 0)
 	{
-		uci = &changed_prefs.mountconfig[unit_no];
+		uaedev_config_data* uci = &changed_prefs.mountconfig[unit_no];
 		get_filesys_unitconfig(&changed_prefs, unit_no, &mi);
 		memcpy(&current_tapedlg.ci, uci, sizeof(uaedev_config_info));
 

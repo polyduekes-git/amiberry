@@ -1,6 +1,7 @@
-#include <string.h>
+#include <cstring>
 
 #include "sysdeps.h"
+#include "gui.h"
 #include "options.h"
 #include "inputdevice.h"
 #include "keyboard.h"
@@ -82,7 +83,7 @@ static struct uae_input_device_kbr_default keytrans_amiga[] = {
 	{ SDL_SCANCODE_KP_PLUS, INPUTEVENT_KEY_NP_ADD, 0, INPUTEVENT_SPC_VOLUME_UP, ID_FLAG_QUALIFIER_SPECIAL, INPUTEVENT_SPC_MASTER_VOLUME_UP, ID_FLAG_QUALIFIER_SPECIAL | ID_FLAG_QUALIFIER_CONTROL, INPUTEVENT_SPC_INCREASE_REFRESHRATE, ID_FLAG_QUALIFIER_SPECIAL | ID_FLAG_QUALIFIER_SHIFT },
 	{ SDL_SCANCODE_KP_MINUS, INPUTEVENT_KEY_NP_SUB, 0, INPUTEVENT_SPC_VOLUME_DOWN, ID_FLAG_QUALIFIER_SPECIAL, INPUTEVENT_SPC_MASTER_VOLUME_DOWN, ID_FLAG_QUALIFIER_SPECIAL | ID_FLAG_QUALIFIER_CONTROL, INPUTEVENT_SPC_DECREASE_REFRESHRATE, ID_FLAG_QUALIFIER_SPECIAL | ID_FLAG_QUALIFIER_SHIFT },
 	{ SDL_SCANCODE_KP_MULTIPLY, INPUTEVENT_KEY_NP_MUL, 0, INPUTEVENT_SPC_VOLUME_MUTE, ID_FLAG_QUALIFIER_SPECIAL, INPUTEVENT_SPC_MASTER_VOLUME_MUTE, ID_FLAG_QUALIFIER_SPECIAL | ID_FLAG_QUALIFIER_CONTROL },
-	{ SDL_SCANCODE_KP_DIVIDE, INPUTEVENT_KEY_NP_DIV },
+	{ SDL_SCANCODE_KP_DIVIDE, INPUTEVENT_KEY_NP_DIV, 0, INPUTEVENT_SPC_STATEREWIND, ID_FLAG_QUALIFIER_SPECIAL },
 	{ SDL_SCANCODE_KP_ENTER, INPUTEVENT_KEY_ENTER },
 
 	{ SDL_SCANCODE_MINUS, INPUTEVENT_KEY_SUB },
@@ -118,12 +119,17 @@ static struct uae_input_device_kbr_default keytrans_amiga[] = {
 	{ SDL_SCANCODE_SEMICOLON, INPUTEVENT_KEY_SEMICOLON },
 	{ SDL_SCANCODE_APOSTROPHE, INPUTEVENT_KEY_SINGLEQUOTE },
 	{ SDL_SCANCODE_GRAVE, INPUTEVENT_KEY_BACKQUOTE },
-
-	{ SDL_SCANCODE_BACKSLASH, INPUTEVENT_KEY_BACKSLASH },
+	{ SDL_SCANCODE_BACKSLASH, INPUTEVENT_KEY_NUMBERSIGN },
 	{ SDL_SCANCODE_COMMA, INPUTEVENT_KEY_COMMA },
 	{ SDL_SCANCODE_PERIOD, INPUTEVENT_KEY_PERIOD },
 	{ SDL_SCANCODE_SLASH, INPUTEVENT_KEY_DIV },
+
 	{ SDL_SCANCODE_NONUSBACKSLASH, INPUTEVENT_KEY_30 },
+	{ SDL_SCANCODE_F11, INPUTEVENT_KEY_BACKSLASH },
+	{ SDL_SCANCODE_F13, INPUTEVENT_KEY_BACKSLASH },
+	{ SDL_SCANCODE_F14, INPUTEVENT_KEY_NP_LPAREN },
+	{ SDL_SCANCODE_F15, INPUTEVENT_KEY_NP_RPAREN },
+
 	{ SDL_SCANCODE_SYSREQ, INPUTEVENT_SPC_SCREENSHOT_CLIPBOARD, 0, INPUTEVENT_SPC_SCREENSHOT, ID_FLAG_QUALIFIER_SPECIAL },
 
 	{ SDL_SCANCODE_END, INPUTEVENT_SPC_QUALIFIER_SPECIAL },
@@ -328,11 +334,11 @@ void setcapslockstate(int state)
 	capslockstate = state;
 }
 
-int getcapslock(void)
+int getcapslock()
 {
 	int capstable[7];
 
-	// this returns bogus state if caps change when in exclusive mode..
+	// this returns bogus state if caps change when in exclusive mode...
 	host_capslockstate = SDL_GetModState() & KMOD_CAPS;
 	host_numlockstate = SDL_GetModState() & KMOD_NUM;
 	host_scrolllockstate = 0; //SDL_GetModState() & ;
@@ -344,6 +350,10 @@ int getcapslock(void)
 	capstable[5] = host_scrolllockstate;
 	capstable[6] = 0;
 	capslockstate = inputdevice_synccapslock(capslockstate, capstable);
+	if (currprefs.keyboard_mode == 0) {
+		gui_data.capslock = host_capslockstate;
+		gui_led(LED_CAPS, gui_data.capslock, -1);
+	}
 	return capslockstate;
 }
 
@@ -352,7 +362,7 @@ void clearallkeys()
 	inputdevice_updateconfig(&changed_prefs, &currprefs);
 }
 
-static const int np[] = {
+static constexpr int np[] = {
 	SDL_SCANCODE_KP_0, 0, SDL_SCANCODE_KP_PERIOD, 0, SDL_SCANCODE_KP_1, 1, SDL_SCANCODE_KP_2, 2,
 	SDL_SCANCODE_KP_3, 3, SDL_SCANCODE_KP_4, 4, SDL_SCANCODE_KP_5, 5, SDL_SCANCODE_KP_6, 6, SDL_SCANCODE_KP_7, 7,
 	SDL_SCANCODE_KP_8, 8, SDL_SCANCODE_KP_9, 9, -1 };
@@ -483,8 +493,7 @@ bool my_kbd_handler(int keyboard, int scancode, int newstate, bool alwaysrelease
 						swapperdrive = 0;
 				}
 				else {
-					int i;
-					for (i = 0; i < 4; i++) {
+					for (int i = 0; i < 4; i++) {
 						if (!_tcscmp(currprefs.floppyslots[i].df, currprefs.dfxlist[num]))
 							changed_prefs.floppyslots[i].df[0] = 0;
 					}
@@ -518,11 +527,12 @@ bool my_kbd_handler(int keyboard, int scancode, int newstate, bool alwaysrelease
 				special = true;
 			}
 			break;
+		default: break;
 		}
 	}
 
 	if (code) {
-		inputdevice_add_inputcode(code, 1, NULL);
+		inputdevice_add_inputcode(code, 1, nullptr);
 		return true;
 	}
 
@@ -550,22 +560,34 @@ bool my_kbd_handler(int keyboard, int scancode, int newstate, bool alwaysrelease
 	return inputdevice_translatekeycode(keyboard, scancode, newstate, alwaysrelease) != 0;
 }
 
-void keyboard_settrans(void)
+void keyboard_settrans()
 {
 	inputdevice_setkeytranslation(keytrans, kbmaps);
 }
 
 int target_checkcapslock(const int scancode, int *state)
 {
-	if (scancode != SDL_SCANCODE_CAPSLOCK && scancode != SDL_SCANCODE_NUMLOCKCLEAR && scancode != SDL_SCANCODE_SCROLLLOCK)
+	if (scancode != SDL_SCANCODE_CAPSLOCK && scancode != SDL_SCANCODE_NUMLOCKCLEAR && scancode != SDL_SCANCODE_SCROLLLOCK) {
 		return 0;
-	if (*state == 0)
+	}
+	if (currprefs.keyboard_mode > 0) {
+		return 1;
+	}
+	if (*state == 0) {
 		return -1;
-	if (scancode == SDL_SCANCODE_CAPSLOCK)
+	}
+	if (scancode == SDL_SCANCODE_CAPSLOCK) {
 		*state = host_capslockstate;
-	if (scancode == SDL_SCANCODE_NUMLOCKCLEAR)
+		if (gui_data.capslock != (host_capslockstate != 0)) {
+			gui_data.capslock = host_capslockstate;
+			gui_led(LED_CAPS, gui_data.capslock, -1);
+		}
+	}
+	if (scancode == SDL_SCANCODE_NUMLOCKCLEAR) {
 		*state = host_numlockstate;
-	if (scancode == SDL_SCANCODE_SCROLLLOCK)
+	}
+	if (scancode == SDL_SCANCODE_SCROLLLOCK) {
 		*state = host_scrolllockstate;
+	}
 	return 1;
 }

@@ -92,7 +92,7 @@ static void setharddrive()
 {
 	sethardfilegeo();
 	sethd();
-	txtHDPath->setText(current_hfdlg.ci.rootdir);
+	//txtHDPath->setText(current_hfdlg.ci.rootdir);
 	auto selIndex = 0;
 	for (auto i = 0; i < controller.size(); ++i) {
 		if (controller[i].type == current_hfdlg.ci.controller_type)
@@ -131,7 +131,8 @@ public:
 			current_hfdlg.ci.controller_type_unit = posn / HD_CONTROLLER_NEXT_UNIT;
 			current_hfdlg.forcedcylinders = 0;
 			current_hfdlg.ci.cyls = current_hfdlg.ci.highcyl = current_hfdlg.ci.sectors = current_hfdlg.ci.surfaces = 0;
-			updatehdfinfo(true, true, true);
+			std::string txt1, txt2;
+			updatehdfinfo(true, true, true, txt1, txt2);
 			inithdcontroller(current_hfdlg.ci.controller_type, current_hfdlg.ci.controller_type_unit, UAEDEV_HDF, current_hfdlg.ci.rootdir[0] != 0);
 			setharddrive();
 		}
@@ -258,6 +259,8 @@ static void InitEditFilesysHardDrive()
 	wndEditFilesysHardDrive->requestModalFocus();
 	focus_bug_workaround(wndEditFilesysHardDrive);
 	cmdHDDCancel->requestFocus();
+
+	setharddrive();
 }
 
 static void ExitEditFilesysHardDrive()
@@ -551,7 +554,6 @@ bool EditFilesysHardDrive(const int unit_no)
 	const AmigaMonitor* mon = &AMonitors[0];
 
 	mountedinfo mi{};
-	uaedev_config_data* uci;
 
 	dialogResult = false;
 	dialogFinished = false;
@@ -582,7 +584,7 @@ bool EditFilesysHardDrive(const int unit_no)
 
 	if (unit_no >= 0)
 	{
-		uci = &changed_prefs.mountconfig[unit_no];
+		uaedev_config_data* uci = &changed_prefs.mountconfig[unit_no];
 		get_filesys_unitconfig(&changed_prefs, unit_no, &mi);
 
 		current_hfdlg.forcedcylinders = uci->ci.highcyl;
@@ -595,7 +597,8 @@ bool EditFilesysHardDrive(const int unit_no)
 		fileSelected = false;
 	}
 
-	updatehdfinfo(true, false, true);
+	std::string txt1, txt2;
+	updatehdfinfo(true, false, true, txt1, txt2);
 
 	// Prepare the screen once
 	uae_gui->logic();

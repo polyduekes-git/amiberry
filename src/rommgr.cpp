@@ -81,7 +81,6 @@ void romlist_add (const TCHAR *path, struct romdata *rd)
 	}
 }
 
-
 struct romdata *getromdatabypath (const TCHAR *path)
 {
 	int i;
@@ -97,7 +96,7 @@ struct romdata *getromdatabypath (const TCHAR *path)
 	return NULL;
 }
 
-#define NEXT_ROM_ID 322
+#define NEXT_ROM_ID 324
 
 #if NEXT_ROM_ID >= MAX_ROMMGR_ROMS
 #error Increase MAX_ROMMGR_ROMS!
@@ -123,8 +122,12 @@ static struct romdata roms[] = {
 	{ _T("Cloanto Amiga Forever 2010 ROM key"), 0, 0, 0, 0, 0, 1544, 73, 0, 1, ROMTYPE_KEY, 0, 0, NULL,
 	0x8c4dd05c, 0x05034f62,0x0b5bb7b2,0x86954ea9,0x164fdb90,0xfb2897a4 },
 
-	{ _T("6500/1 Keyboard MCU ROM"), 0, 0, 0, 0, _T("KBDMCU\0"), 2048, 321, 0, 0, ROMTYPE_KBMCU, 0, 0, NULL,
+	{ _T("6570-036 Keyboard MCU ROM"), 0, 0, 0, 0, _T("KBDMCU\0"), 2048, 321, 0, 0, ROMTYPE_KBMCU, 0, 0, NULL,
 	0x4a3fc332, 0x83b21d0c, 0x8b93fc9b, 0x9b3b287f, 0xde4ec8f3, 0xbadac5a2 },
+	{ _T("68HC05 Keyboard MCU ROM"), 0, 0, 0, 0, _T("KBDMCU\0"), 8192, 322, 0, 0, ROMTYPE_KBMCU, 0, 0, NULL,
+	0x2a77eec4, 0x301ec6a6, 0x9404457d, 0x912c89e3, 0xfc54095e, 0xda9f0e93 },
+	{ _T("D8039HLC Keyboard MCU ROM"), 0, 0, 0, 0, _T("KBDMCU\0"), 2048, 323, 0, 0, ROMTYPE_KBMCU, 0, 0, NULL,
+	0xc23d280e, 0xb5c4b8c3, 0x8b9e4a86, 0x4abc871d, 0x048bd1c3, 0xa02c8432 },
 
 	{ _T("KS ROM v23.93 (Velvet)"), 23, 93, 23, 93, _T("VELVET\0"), 131072, 125, 0, 0, ROMTYPE_KICK, 0, 0, NULL,
 	0xadcb44c9, 0x7c36b2ba,0x298da3da,0xce60d0ba,0x8511d470,0x76a40d5c, NULL, NULL, 4 },
@@ -372,6 +375,8 @@ static struct romdata roms[] = {
 	ALTROM(29, 1, 2, 131072, ROMTYPE_ODD  | ROMTYPE_8BIT, 0x1d35bd56, 0x6464be16,0x26b51949,0x9e76e4e3,0x409e8016,0x515d48b6)
 	{ _T("Freezer: Action Replay Mk III v3.17"), 3, 17, 3, 17, _T("AR\0"), 262144, 30, 0, 0, ROMTYPE_AR2, 0, 1, NULL,
 	0xc8a16406, 0x5D4987C2,0xE3FFEA8B,0x1B02E314,0x30EF190F,0x2DB76542, NULL, NULL, 1 },
+	ALTROM(30, 1, 1, 131072, ROMTYPE_EVEN | ROMTYPE_8BIT, 0x5fb69a10, 0x2ce641d1,0xe2e25476,0x9be7d1ba,0x41aace07,0x9cb04e27)
+	ALTROM(30, 1, 2, 131072, ROMTYPE_ODD  | ROMTYPE_8BIT, 0xf767d072, 0xa7431d22,0xbfdb746a,0x8bb6073c,0x9edf7a2b,0x65c6d307)
 	{ _T("Freezer: Action Replay 1200"), 0, 0, 0, 0, _T("AR\0"), 262144, 47, 0, 0, ROMTYPE_AR, 0, 1, NULL,
 	0x8d760101, 0x0F6AB834,0x2810094A,0xC0642F62,0xBA42F78B,0xC0B07E6A, NULL, NULL, 1 },
 
@@ -1453,7 +1458,7 @@ int load_keyring (struct uae_prefs *p, const TCHAR *path)
 			_tcscat (tmp, _T("rom.key"));
 			break;
 		case 5:
-			_stprintf (tmp, _T("%s../shared/rom/rom.key"), home_dir.c_str());
+			_sntprintf (tmp, sizeof tmp, _T("%s../shared/rom/rom.key"), home_dir.c_str());
 			break;
 		case 6:
 			if (p) {
@@ -1760,11 +1765,11 @@ void getromname	(const struct romdata *rd, TCHAR *name)
 		rd--;
 	_tcscat (name, rd->name);
 	if ((rd->subrev || rd->subver) && rd->subver != rd->ver)
-		_stprintf (name + _tcslen (name), _T(" rev %d.%d"), rd->subver, rd->subrev);
+		_sntprintf (name + _tcslen (name), sizeof name + _tcslen (name), _T(" rev %d.%d"), rd->subver, rd->subrev);
 	if (rd->size > 0)
-		_stprintf (name + _tcslen (name), _T(" (%dk)"), (rd->size + 1023) / 1024);
+		_sntprintf (name + _tcslen (name), sizeof name + _tcslen (name), _T(" (%dk)"), (rd->size + 1023) / 1024);
 	if (rd->partnumber && rd->partnumber[0] != '\0')
-		_stprintf (name + _tcslen (name), _T(" [%s]"), rd->partnumber);
+		_sntprintf (name + _tcslen (name), sizeof name + _tcslen (name), _T(" [%s]"), rd->partnumber);
 }
 
 struct romlist *getromlistbyromdata (const struct romdata *rd)
@@ -2430,13 +2435,13 @@ int configure_rom (struct uae_prefs *p, const int *rom, int msg)
 
 	if (rd->type & (ROMTYPE_ARCADIAGAME | ROMTYPE_ALG)) {
 		get_nvram_path(p->flashfile, sizeof(p->flashfile) / sizeof(TCHAR));
-		_stprintf(p->flashfile + _tcslen(p->flashfile), _T("%s.nvr"), rd->name);
+		_sntprintf(p->flashfile + _tcslen(p->flashfile), sizeof p->flashfile + _tcslen(p->flashfile), _T("%s.nvr"), rd->name);
 		clean_path(p->flashfile);
 	}
 #ifdef ARCADIA
 	if (rd->type & ROMTYPE_ALG) {
 		get_video_path(p->genlock_video_file, sizeof(p->genlock_video_file) / sizeof(TCHAR));
-		_stprintf(p->genlock_video_file + _tcslen(p->genlock_video_file), _T("%s.avi"), rd->name);
+		_sntprintf(p->genlock_video_file + _tcslen(p->genlock_video_file), sizeof p->genlock_video_file + _tcslen(p->genlock_video_file), _T("%s.avi"), rd->name);
 		clean_path(p->genlock_video_file);
 	}
 #endif

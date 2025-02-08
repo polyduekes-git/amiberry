@@ -121,7 +121,8 @@ public:
 						bIgnoreListChange = false;
 					}
 					whdload_auto_prefs(&changed_prefs, whdload_prefs.whdload_filename.c_str());
-					SetLastActiveConfig(whdload_prefs.whdload_filename.c_str());
+					if (!last_loaded_config[0])
+						set_last_active_config(whdload_prefs.whdload_filename.c_str());
 				}
 				refresh_all_panels();
 			}
@@ -516,5 +517,12 @@ bool HelpPanelWHDLoad(std::vector<std::string>& helptext)
 	helptext.emplace_back("Config Delay: Delay in seconds before starting the game.");
 	helptext.emplace_back("Write Cache: Enable Write cache before starting the game.");
 	helptext.emplace_back("Quit on Exit: Quit Amiberry when the game exits.");
+	helptext.emplace_back(" ");
+	helptext.emplace_back("Note: You must load the same WHDLoad .lha file, to be able to change");
+	helptext.emplace_back("the custom/global settings here, when an associated .uae config file");
+	helptext.emplace_back("is used. You cannot change these settings by loading the .uae config");
+	helptext.emplace_back("file alone - you must first load the .lha file itself, change any");
+	helptext.emplace_back("settings, and then save the .uae config file.");
+	helptext.emplace_back(" ");
 	return true;
 }

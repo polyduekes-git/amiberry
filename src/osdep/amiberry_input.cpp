@@ -10,6 +10,7 @@
 #include "fsdb.h"
 #include "uae.h"
 #include "xwin.h"
+#include "tabletlibrary.h"
 
 enum
 {
@@ -31,6 +32,7 @@ enum
 
 #define FIRST_JOY_BUTTON	MAX_JOY_AXES
 
+int tablet_log = 0;
 int key_swap_hack = 0;
 
 static struct didata di_mouse[MAX_INPUT_DEVICES];
@@ -39,8 +41,8 @@ struct didata di_joystick[MAX_INPUT_DEVICES];
 
 static int num_mouse = 1, num_keyboard = 1, num_joystick = 0, num_retroarch_kbdjoy = 0;
 static int joystick_inited, retroarch_inited;
-const auto analog_upper_bound = 32767;
-const auto analog_lower_bound = -analog_upper_bound;
+constexpr auto analog_upper_bound = 32767;
+constexpr auto analog_lower_bound = -analog_upper_bound;
 
 static int isrealbutton(const struct didata* did, const int num)
 {
@@ -354,7 +356,7 @@ static int keyboard_german;
 int keyhack (const int scancode, const int pressed, const int num)
 {
 	static unsigned char backslashstate, apostrophstate;
-	const Uint8* state = SDL_GetKeyboardState(NULL);
+	const Uint8* state = SDL_GetKeyboardState(nullptr);
 
 	// release mouse if TAB and ALT is pressed (but only if option is enabled)
 	if (currprefs.alt_tab_release)
@@ -364,7 +366,7 @@ int keyhack (const int scancode, const int pressed, const int num)
 			return -1;
 		}
 	}
-
+#if 0
 	if (!keyboard_german)
 		return scancode;
 
@@ -420,6 +422,7 @@ int keyhack (const int scancode, const int pressed, const int num)
 			}
 		}
 	}
+#endif
 	return scancode;
 }
 
@@ -448,7 +451,7 @@ static void di_dev_free(struct didata* did)
 	cleardid(did);
 }
 
-static void di_free(void)
+static void di_free()
 {
 	for (auto i = 0; i < MAX_INPUT_DEVICES; i++) {
 		di_dev_free(&di_joystick[i]);
@@ -457,15 +460,254 @@ static void di_free(void)
 	}
 }
 
-int is_touch_lightpen(void)
+//static HMODULE wintab;
+//typedef UINT(API* WTINFOW)(UINT, UINT, LPVOID);
+//static WTINFOW pWTInfoW;
+//typedef BOOL(API* WTCLOSE)(HCTX);
+//static WTCLOSE pWTClose;
+//typedef HCTX(API* WTOPENW)(HWND, LPLOGCONTEXTW, BOOL);
+//static WTOPENW pWTOpenW;
+//typedef BOOL(API* WTPACKET)(HCTX, UINT, LPVOID);
+//WTPACKET pWTPacket;
+
+static int tablet;
+static int axmax, aymax, azmax;
+static int xmax, ymax, zmax;
+static int xres, yres;
+static int maxpres;
+static TCHAR* tabletname;
+static int tablet_x, tablet_y, tablet_z, tablet_pressure, tablet_buttons, tablet_proximity;
+static int tablet_ax, tablet_ay, tablet_az, tablet_flags;
+static int tablet_div;
+
+static void tablet_send(void)
+{
+	static int eraser;
+
+	//if ((tablet_flags & TPS_INVERT) && tablet_pressure > 0) {
+	//	tablet_buttons |= 2;
+	//	eraser = 1;
+	//}
+	//else if (eraser) {
+	//	tablet_buttons &= ~2;
+	//	eraser = 0;
+	//}
+	//if (tablet_x < 0)
+	//	return;
+	//inputdevice_tablet(tablet_x, tablet_y, tablet_z, tablet_pressure, tablet_buttons, tablet_proximity,
+	//	tablet_ax, tablet_ay, tablet_az, dinput_lightpen());
+	//tabletlib_tablet(tablet_x, tablet_y, tablet_z, tablet_pressure, maxpres, tablet_buttons, tablet_proximity,
+	//	tablet_ax, tablet_ay, tablet_az);
+}
+
+void send_tablet_proximity(int inproxi)
+{
+	//if (tablet_proximity == inproxi)
+	//	return;
+	//tablet_proximity = inproxi;
+	//if (!tablet_proximity) {
+	//	tablet_flags &= ~TPS_INVERT;
+	//}
+	//if (tablet_log & 4)
+	//	write_log(_T("TABLET: Proximity=%d\n"), inproxi);
+	//tablet_send();
+}
+
+void send_tablet(int x, int y, int z, int pres, uae_u32 buttons, int flags, int ax, int ay, int az, int rx, int ry, int rz, SDL_Rect* r)
+{
+	//if (tablet_log & 4)
+	//	write_log(_T("TABLET: B=%08X F=%08X X=%d Y=%d P=%d (%d,%d,%d)\n"), buttons, flags, x, y, pres, ax, ay, az);
+	//if (axmax > 0)
+	//	ax = ax * 255 / axmax;
+	//else
+	//	ax = 0;
+	//if (aymax > 0)
+	//	ay = ay * 255 / aymax;
+	//else
+	//	ay = 0;
+	//if (azmax > 0)
+	//	az = az * 255 / azmax;
+	//else
+	//	az = 0;
+	//pres = pres * 255 / maxpres;
+
+	//tablet_x = (x + tablet_div / 2) / tablet_div;
+	//tablet_y = ymax - (y + tablet_div / 2) / tablet_div;
+	//tablet_z = z;
+	//tablet_pressure = pres;
+	//tablet_buttons = buttons;
+	//tablet_ax = abs(ax);
+	//tablet_ay = abs(ay);
+	//tablet_az = abs(az);
+	//tablet_flags = flags;
+
+	//tablet_send();
+}
+
+// TODO implement with SDL3
+//static int gettabletres(AXIS* a)
+//{
+//	FIX32 r = a->axResolution;
+//	switch (a->axUnits)
+//	{
+//	case TU_INCHES:
+//		return r >> 16;
+//	case TU_CENTIMETERS:
+//		return (int)(((r / 65536.0) / 2.54) + 0.5);
+//	default:
+//		return -1;
+//	}
+//}
+
+void* open_tablet(SDL_Window* window)
+{
+	// TODO implement with SDL3
+	//static int initialized;
+	//LOGCONTEXT lc = { 0 };
+	//AXIS tx = { 0 }, ty = { 0 }, tz = { 0 };
+	//AXIS pres = { 0 };
+	//int xm, ym, zm;
+
+	//if (!tablet)
+	//	return 0;
+	//if (inputdevice_is_tablet() <= 0 && !is_touch_lightpen())
+	//	return 0;
+	//xmax = -1;
+	//ymax = -1;
+	//zmax = -1;
+	//pWTInfoW(WTI_DEFCONTEXT, 0, &lc);
+	//pWTInfoW(WTI_DEVICES, DVC_X, &tx);
+	//pWTInfoW(WTI_DEVICES, DVC_Y, &ty);
+	//pWTInfoW(WTI_DEVICES, DVC_NPRESSURE, &pres);
+	//pWTInfoW(WTI_DEVICES, DVC_XMARGIN, &xm);
+	//pWTInfoW(WTI_DEVICES, DVC_YMARGIN, &ym);
+	//pWTInfoW(WTI_DEVICES, DVC_ZMARGIN, &zm);
+	//xmax = tx.axMax;
+	//ymax = ty.axMax;
+	//if (pWTInfoW(WTI_DEVICES, DVC_Z, &tz))
+	//	zmax = tz.axMax;
+	//lc.lcOptions |= CXO_MESSAGES;
+	//lc.lcPktData = PACKETDATA;
+	//lc.lcPktMode = PACKETMODE;
+	//lc.lcMoveMask = PACKETDATA;
+	//lc.lcBtnUpMask = lc.lcBtnDnMask;
+	//lc.lcInExtX = tx.axMax;
+	//lc.lcInExtY = ty.axMax;
+	//if (zmax > 0)
+	//	lc.lcInExtZ = tz.axMax;
+	//if (!initialized) {
+	//	write_log(_T("Tablet '%s' parameters\n"), tabletname);
+	//	write_log(_T("Xmax=%d,Ymax=%d,Zmax=%d\n"), xmax, ymax, zmax);
+	//	write_log(_T("Xres=%.1f:%d,Yres=%.1f:%d,Zres=%.1f:%d\n"),
+	//		tx.axResolution / 65536.0, tx.axUnits, ty.axResolution / 65536.0, ty.axUnits, tz.axResolution / 65536.0, tz.axUnits);
+	//	write_log(_T("Xrotmax=%d,Yrotmax=%d,Zrotmax=%d\n"), axmax, aymax, azmax);
+	//	write_log(_T("PressureMin=%d,PressureMax=%d\n"), pres.axMin, pres.axMax);
+	//}
+	//maxpres = pres.axMax;
+	//xres = gettabletres(&tx);
+	//yres = gettabletres(&ty);
+	//tablet_div = 1;
+	//while (xmax / tablet_div > 4095 || ymax / tablet_div > 4095) {
+	//	tablet_div *= 2;
+	//}
+	//xmax /= tablet_div;
+	//ymax /= tablet_div;
+	//xres /= tablet_div;
+	//yres /= tablet_div;
+
+	//if (tablet_div > 1)
+	//	write_log(_T("Divisor: %d (%d,%d)\n"), tablet_div, xmax, ymax);
+	//tablet_proximity = -1;
+	//tablet_x = -1;
+	//inputdevice_tablet_info(xmax, ymax, zmax, axmax, aymax, azmax, xres, yres);
+	//tabletlib_tablet_info(xmax, ymax, zmax, axmax, aymax, azmax, xres, yres);
+	//initialized = 1;
+	//return pWTOpenW(hwnd, &lc, TRUE);
+	return nullptr;
+}
+
+int close_tablet(void* ctx)
+{
+	// TODO implement with SDL3
+	//if (!wintab)
+	//	return 0;
+	//if (ctx != NULL)
+	//	pWTClose((HCTX)ctx);
+	//ctx = NULL;
+	//if (!tablet)
+	//	return 0;
+	return 1;
+}
+
+int is_touch_lightpen()
 {
 	return 0;
 }
 
-int is_tablet(void)
+int is_tablet()
 {
-	//return (tablet || os_touch) ? 1 : 0;
 	return 0;
+	//return (tablet) ? 1 : 0;
+}
+
+static int initialize_tablet(void)
+{
+	// TODO implement with SDL3
+	//TCHAR name[MAX_DPATH];
+	//struct tagAXIS ori[3];
+	//int tilt = 0;
+
+	//wintab = WIN32_LoadLibrary(_T("wintab32.dll"));
+	//if (wintab == NULL) {
+	//	write_log(_T("Tablet: no wintab32.dll\n"));
+	//	return 0;
+	//}
+
+	//pWTOpenW = (WTOPENW)GetProcAddress(wintab, "WTOpenW");
+	//pWTClose = (WTCLOSE)GetProcAddress(wintab, "WTClose");
+	//pWTInfoW = (WTINFOW)GetProcAddress(wintab, "WTInfoW");
+	//pWTPacket = (WTPACKET)GetProcAddress(wintab, "WTPacket");
+
+	//if (!pWTOpenW || !pWTClose || !pWTInfoW || !pWTPacket) {
+	//	write_log(_T("Tablet: wintab32.dll has missing functions!\n"));
+	//	FreeModule(wintab);
+	//	wintab = NULL;
+	//	return 0;
+	//}
+
+	//if (!pWTInfoW(0, 0, NULL)) {
+	//	write_log(_T("Tablet: WTInfo() returned failure\n"));
+	//	FreeModule(wintab);
+	//	wintab = NULL;
+	//	return 0;
+	//}
+	//name[0] = 0;
+	//if (!pWTInfoW(WTI_DEVICES, DVC_NAME, name)) {
+	//	write_log(_T("Tablet: WTInfo(DVC_NAME) returned failure\n"));
+	//	FreeModule(wintab);
+	//	wintab = NULL;
+	//	return 0;
+	//}
+	//if (name[0] == 0) {
+	//	write_log(_T("Tablet: WTInfo(DVC_NAME) returned NULL name\n"));
+	//	FreeModule(wintab);
+	//	wintab = NULL;
+	//	return 0;
+	//}
+	//axmax = aymax = azmax = -1;
+	//tilt = pWTInfoW(WTI_DEVICES, DVC_ORIENTATION, ori);
+	//if (tilt) {
+	//	if (ori[0].axMax > 0)
+	//		axmax = ori[0].axMax;
+	//	if (ori[1].axMax > 0)
+	//		aymax = ori[1].axMax;
+	//	if (ori[2].axMax > 0)
+	//		azmax = ori[2].axMax;
+	//}
+	//write_log(_T("Tablet '%s' detected\n"), name);
+	//tabletname = my_strdup(name);
+	//tablet = TRUE;
+	return 1;
 }
 
 static int init_mouse()
@@ -506,7 +748,6 @@ static int acquire_mouse(const int num, int flags)
 		return 1;
 	}
 
-	struct AmigaMonitor* mon = &AMonitors[0];
 	struct didata* did = &di_mouse[num];
 	did->acquired = 1;
 	return did->acquired > 0 ? 1 : 0;
@@ -519,7 +760,6 @@ static void unacquire_mouse(int num)
 	}
 
 	struct didata* did = &di_mouse[num];
-	struct AmigaMonitor* mon = &AMonitors[0];
 	did->acquired = 0;
 }
 
@@ -739,7 +979,7 @@ static int init_kb()
 	std::string retroarch_file = get_retroarch_file();
 	if (my_existsfile2(retroarch_file.c_str()))
 	{
-		// Add as many keyboards as joysticks that are setup
+		// Add as many keyboards as joysticks that are set up
 		// on arcade machines, you could have a 4 player ipac using all keyboard buttons
 		// so you want to have at least 4 keyboards to choose from!
 		// once one config is missing, simply stop adding them!
@@ -758,7 +998,7 @@ static void close_kb()
 {
 }
 
-void release_keys(void)
+void release_keys()
 {
 	// Special handling in case Alt-Tab was still stuck in pressed state
 	if (currprefs.alt_tab_release && key_altpressed())
@@ -767,14 +1007,14 @@ void release_keys(void)
 		my_kbd_handler(0, SDL_SCANCODE_TAB, 0, true);
 	}
 
-	const Uint8* state = SDL_GetKeyboardState(NULL);
+	const Uint8* state = SDL_GetKeyboardState(nullptr);
 	SDL_Event event;
 
 	for (int i = 0; i < SDL_NUM_SCANCODES; ++i) {
 		if (state[i]) {
 			event.type = SDL_KEYUP;
-			event.key.keysym.scancode = (SDL_Scancode)i;
-			event.key.keysym.sym = SDL_GetKeyFromScancode((SDL_Scancode)i);
+			event.key.keysym.scancode = static_cast<SDL_Scancode>(i);
+			event.key.keysym.sym = SDL_GetKeyFromScancode(static_cast<SDL_Scancode>(i));
 			event.key.keysym.mod = 0;
 			event.key.state = SDL_RELEASED;
 			SDL_PushEvent(&event);
@@ -786,7 +1026,6 @@ void release_keys(void)
 
 static int acquire_kb(const int num, int flags)
 {
-	struct AmigaMonitor* mon = &AMonitors[0];
 	struct didata* did = &di_keyboard[num];
 	did->acquired = 1;
 	return did->acquired > 0 ? 1 : 0;
@@ -795,7 +1034,6 @@ static int acquire_kb(const int num, int flags)
 static void unacquire_kb(const int num)
 {
 	struct didata* did = &di_keyboard[num];
-	struct AmigaMonitor* mon = &AMonitors[0];
 	did->acquired = 0;
 }
 
@@ -803,7 +1041,7 @@ static void read_kb()
 {
 }
 
-void wait_keyrelease(void)
+void wait_keyrelease()
 {
 	release_keys();
 }
@@ -1204,25 +1442,25 @@ static int get_joystick_widget_type(const int joy, const int num, TCHAR* name, u
 			switch (num)
 			{
 			case FIRST_JOY_BUTTON:
-				sprintf(name, "Button X/CD32 red");
+				_sntprintf(name, sizeof name, "Button X/CD32 red");
 				break;
 			case FIRST_JOY_BUTTON + 1:
-				sprintf(name, "Button B/CD32 blue");
+				_sntprintf(name, sizeof name, "Button B/CD32 blue");
 				break;
 			case FIRST_JOY_BUTTON + 2:
-				sprintf(name, "Button A/CD32 green");
+				_sntprintf(name, sizeof name, "Button A/CD32 green");
 				break;
 			case FIRST_JOY_BUTTON + 3:
-				sprintf(name, "Button Y/CD32 yellow");
+				_sntprintf(name, sizeof name, "Button Y/CD32 yellow");
 				break;
 			case FIRST_JOY_BUTTON + 4:
-				sprintf(name, "CD32 start");
+				_sntprintf(name, sizeof name, "CD32 start");
 				break;
 			case FIRST_JOY_BUTTON + 5:
-				sprintf(name, "CD32 ffw");
+				_sntprintf(name, sizeof name, "CD32 ffw");
 				break;
 			case FIRST_JOY_BUTTON + 6:
-				sprintf(name, "CD32 rwd");
+				_sntprintf(name, sizeof name, "CD32 rwd");
 				break;
 			default:
 				break;
@@ -1235,11 +1473,11 @@ static int get_joystick_widget_type(const int joy, const int num, TCHAR* name, u
 		if (name)
 		{
 			if (num == 0)
-				sprintf(name, "X Axis");
+				_sntprintf(name, sizeof name, "X Axis");
 			else if (num == 1)
-				sprintf(name, "Y Axis");
+				_sntprintf(name, sizeof name, "Y Axis");
 			else
-				sprintf(name, "Axis %d", num + 1);
+				_sntprintf(name, sizeof name, "Axis %d", num + 1);
 		}
 		return IDEV_WIDGET_AXIS;
 	}
@@ -1453,6 +1691,7 @@ void read_joystick_hat(const int id, int hat, const int value)
 			case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
 				state = value & SDL_HAT_RIGHT;
 				break;
+			default: break;
 			}
 			setjoybuttonstate(id, button, state);
 		}
@@ -1476,7 +1715,7 @@ struct inputdevice_functions inputdevicefunc_joystick = {
 // We use setid to set up custom events
 int input_get_default_joystick(struct uae_input_device* uid, int i, int port, int af, int mode, bool gp, bool joymouseswap, bool default_osk)
 {
-	struct didata* did = NULL;
+	struct didata* did = nullptr;
 	int h, v;
 
 	if (joymouseswap) {

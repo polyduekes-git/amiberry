@@ -45,8 +45,17 @@
 #define CDTV /* CDTV emulation */
 #define PARALLEL_PORT /* parallel port emulation */
 //#define PARALLEL_DIRECT /* direct parallel port emulation */
+
+// We define this externally in Amiberry
+#ifdef USE_LIBSERIALPORT
 #define SERIAL_PORT  /* serial port emulation */
+#endif
+
+// We define this externally in Amiberry
+#ifdef USE_LIBENET
 #define SERIAL_ENET /* serial port UDP transport */
+#endif
+
 #define SCSIEMU /* uaescsi.device emulation */
 #define UAESERIAL /* uaeserial.device emulation */
 #define FPUEMU /* FPU emulation */
@@ -109,13 +118,18 @@
 #define WITH_DSP
 #define WITH_DRACO
 
+// We define this externally in Amiberry
 // Use portmidi library for MIDI devices
+#ifdef USE_PORTMIDI
 #define WITH_MIDI
+#endif
 
 /* vpar virtual parallel port */
 #define WITH_VPAR 1
 
-/* #define WITH_SCSI_IOCTL */
+// TODO: Disabled until this is fully implemented
+//#define WITH_SCSI_IOCTL
+
 /* #define WITH_SCSI_SPTI */
 
 // Sound boards support
@@ -147,7 +161,7 @@
 #undef D3D
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 
 #if defined(__x86_64__) || defined(CPU_AARCH64) || defined(CPU_AMD64) || defined(__LP64__)
 #define SIZEOF_VOID_P 8
@@ -268,7 +282,7 @@ typedef int32_t uae_atomic;
 /* #undef STAT_STATFS3_OSF1 */
 
 /* Define if there is no specific function for reading filesystems usage
-   information and you have the <sys/filsys.h> header file.  [SVR2]  */
+   information, and you have the <sys/filsys.h> header file.  [SVR2]  */
 /* #undef STAT_READ_FILSYS */
 
 /* Define if statfs takes 2 args and struct statfs has a field named f_bsize.
@@ -301,7 +315,7 @@ typedef int32_t uae_atomic;
 /* The number of bytes in a char.  */
 #define SIZEOF_CHAR 1
 
-/* The number of bytes in a int.  */
+/* The number of bytes in an int.  */
 #define SIZEOF_INT 4
 
 /* The number of bytes in a long.  */
