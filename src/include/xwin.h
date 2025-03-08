@@ -48,12 +48,13 @@ extern int isvsync(void);
 
 extern void flush_line(struct vidbuffer*, int);
 extern void flush_block(struct vidbuffer*, int, int);
+extern void flush_screen(struct vidbuffer*, int, int);
 extern void flush_clear_screen(struct vidbuffer*);
 extern bool render_screen(int monid, int, bool);
 extern void show_screen(int monid, int mode);
 extern bool show_screen_maybe(int monid, bool);
 
-extern int lockscr(struct vidbuffer*, bool, bool, bool);
+extern int lockscr(struct vidbuffer*, bool, bool);
 extern void unlockscr(struct vidbuffer*, int, int);
 extern bool target_graphics_buffer_update(int monid, bool force);
 extern float target_adjust_vblank_hz(int monid, float);
@@ -95,10 +96,6 @@ extern float getvsyncrate(int monid, float hz, int* mult);
 struct vidbuffer
 {
 	/* Function implemented by graphics driver */
-	void (*flush_line)         (struct vidbuf_description* gfxinfo, struct vidbuffer* vb, int line_no);
-	void (*flush_block)        (struct vidbuf_description* gfxinfo, struct vidbuffer* vb, int first_line, int end_line);
-	void (*flush_screen)       (struct vidbuf_description* gfxinfo, struct vidbuffer* vb, int first_line, int end_line);
-	void (*flush_clear_screen) (struct vidbuf_description* gfxinfo, struct vidbuffer* vb);
 	int  (*lockscr)            (struct vidbuf_description* gfxinfo, struct vidbuffer* vb);
 	void (*unlockscr)          (struct vidbuf_description* gfxinfo, struct vidbuffer* vb);
 	uae_u8* linemem;
@@ -108,6 +105,8 @@ struct vidbuffer
 	uae_u8* realbufmem;
 	uae_u8* bufmem_allocated;
 	bool bufmem_lockable;
+	bool locked;
+	bool vram_buffer;
 	int rowbytes; /* Bytes per row in the memory pointed at by bufmem. */
 	int pixbytes; /* Bytes per pixel. */
 	/* size of this buffer */
@@ -124,8 +123,6 @@ struct vidbuffer
 	int inheight2;
 	/* use drawbuffer instead */
 	bool nativepositioning;
-	/* tempbuffer in use */
-	bool tempbufferinuse;
 	/* extra width, chipset hpos extra in right border */
 	int extrawidth, extraheight;
 

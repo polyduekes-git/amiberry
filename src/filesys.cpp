@@ -5406,7 +5406,6 @@ static void updatedirtime (a_inode *a1, int now)
 
 	if (!a1->parent)
 		return;
-
 	if (!now) {
 		if (!my_stat (a1->nname, &statbuf))
 			return;

@@ -86,19 +86,23 @@ struct gpiod_line* lineYellow; // Yellow LED
 #include "amiberry_dbus.h"
 #endif
 
-SDL_threadID mainthreadid;
+static SDL_threadID mainthreadid;
 static int logging_started;
 int log_scsi;
 int log_net;
 int log_vsync, debug_vsync_min_delay, debug_vsync_forced_delay;
 int uaelib_debug;
 int pissoff_value = 15000 * CYCLE_UNIT;
+int multithread_enabled = 1;
 
 static TCHAR* inipath = nullptr;
 extern FILE* debugfile;
 static int forceroms;
 static void* tablet;
 SDL_Cursor* normalcursor;
+
+TCHAR VersionStr[256];
+TCHAR BetaStr[64];
 
 int paraport_mask;
 
@@ -152,10 +156,7 @@ void cap_fps(Uint64 start)
 
 std::string get_version_string()
 {
-	const auto pre_release_string = std::string(AMIBERRY_VERSION_PRE_RELEASE);
-	if (pre_release_string.empty())
-		return "Amiberry " + std::string(AMIBERRY_VERSION);
-	return "Amiberry " + std::string(AMIBERRY_VERSION) + "-" + std::string(AMIBERRY_VERSION_PRE_RELEASE);
+	return VersionStr;
 }
 
 std::string get_copyright_notice()
@@ -354,13 +355,25 @@ void set_last_active_config(const char* filename)
 	remove_file_extension(last_active_config);
 }
 
-int getdpiforwindow(SDL_Window* hwnd)
+int getdpiformonitor(int displayIndex)
+{
+	float ddpi, hdpi, vdpi;
+	if (SDL_GetDisplayDPI(displayIndex, &ddpi, &hdpi, &vdpi) == 0) {
+		return static_cast<int>(vdpi);
+	}
+	else {
+		// Fallback to a default DPI value if SDL_GetDisplayDPI fails
+		return 96; // Common default DPI value
+	}
+}
+
+int getdpiforwindow(const int monid)
 {
 	float diagDPI = -1;
 	float horiDPI = -1;
 	float vertDPI = -1;
 
-	SDL_GetDisplayDPI(0, &diagDPI, &horiDPI, &vertDPI);
+	SDL_GetDisplayDPI(monid, &diagDPI, &horiDPI, &vertDPI);
 	return static_cast<int>(vertDPI);
 }
 
@@ -547,15 +560,15 @@ void setminimized(const int monid)
 {
 	if (!minimized)
 		minimized = 1;
-	set_inhibit_frame(monid, IHF_WINDOWHIDDEN);
 }
 
 void unsetminimized(const int monid)
 {
-	if (minimized > 0)
+	if (minimized < 0)
+		gfx_DisplayChangeRequested(2);
+	else if (minimized > 0)
 		full_redraw_all();
 	minimized = 0;
-	clear_inhibit_frame(monid, IHF_WINDOWHIDDEN);
 }
 
 void refreshtitle()
@@ -639,18 +652,74 @@ void updatemouseclip(AmigaMonitor* mon)
 	if (mon_cursorclipped) {
 		mon->amigawinclip_rect = mon->amigawin_rect;
 		if (!isfullscreen()) {
-			GetWindowRect(mon->amiga_window, &mon->amigawinclip_rect);
-
+			int idx = 0;
+			reenumeratemonitors();
+			while (Displays[idx].monitorname) {
+				SDL_Rect out;
+				MultiDisplay* md = &Displays[idx];
+				idx++;
+				if (md->rect.x == md->workrect.x && md->rect.w == md->workrect.w
+					&& md->rect.y == md->workrect.y && md->rect.h == md->workrect.h)
+					continue;
+				// not in this monitor?
+				if (!SDL_IntersectRect(&md->rect, &mon->amigawin_rect, &out))
+					continue;
+				for (int e = 0; e < 4; e++) {
+					int v1, v2, x, y;
+					int* lp;
+					switch (e)
+					{
+					case 0:
+					default:
+						v1 = md->rect.x;
+						v2 = md->workrect.x;
+						lp = &mon->amigawinclip_rect.x;
+						x = v1 - 1;
+						y = (md->rect.h) / 2;
+						break;
+					case 1:
+						v1 = md->rect.y;
+						v2 = md->workrect.y;
+						lp = &mon->amigawinclip_rect.y;
+						x = (md->rect.w) / 2;
+						y = v1 - 1;
+						break;
+					case 2:
+						v1 = md->rect.w;
+						v2 = md->workrect.w;
+						lp = &mon->amigawinclip_rect.w;
+						x = v1 + 1;
+						y = (md->rect.h) / 2;
+						break;
+					case 3:
+						v1 = md->rect.h;
+						v2 = md->workrect.h;
+						lp = &mon->amigawinclip_rect.h;
+						x = (md->rect.w) / 2;
+						y = v1 + 1;
+						break;
+					}
+					// is there another monitor sharing this edge?
+					SDL_Point pt;
+					pt.x = x;
+					pt.y = y;
+					if (MonitorFromPoint(pt))
+						continue;
+					// restrict mouse clip bounding box to this edge
+					if (e >= 2) {
+						*lp = std::min<LONG>(*lp, v2);
+					}
+					else {
+						*lp = std::max<LONG>(*lp, v2);
+					}
+				}
+			}
 			// Too small or invalid?
 			if (mon->amigawinclip_rect.w <= mon->amigawinclip_rect.x + 7 || mon->amigawinclip_rect.h <= mon->amigawinclip_rect.y + 7)
 				mon->amigawinclip_rect = mon->amigawin_rect;
 		}
 		if (mon_cursorclipped == mon->monitor_id + 1) {
-#if MOUSECLIP_LOG
-			write_log(_T("CLIP mon=%d %dx%d %dx%d %d\n"), mon->monitor_id, mon->amigawin_rect.left, mon->amigawin_rect.top, mon->amigawin_rect.right, mon->amigawin_rect.bottom, isfullscreen());
-#endif
-			//SDL_SetWindowGrab(mon->amiga_window, SDL_TRUE);
-			//SDL_WarpMouseInWindow(mon->amiga_window, mon->amigawinclip_rect.w / 2, mon->amigawinclip_rect.h / 2);
+
 		}
 	}
 }
@@ -800,6 +869,10 @@ static void setmouseactive2(AmigaMonitor* mon, int active, const bool allowpause
 			sound_closed = -1;
 		}
 	}
+#ifdef RETROPLATFORM
+	rp_mouse_capture(active);
+	rp_mouse_magic(magicmouse_alive());
+#endif
 }
 
 void setmouseactive(const int monid, const int active)
@@ -825,15 +898,12 @@ static void amiberry_active(const AmigaMonitor* mon, const int is_minimized)
 	if (sound_closed != 0) {
 		if (sound_closed < 0) {
 			resumesoundpaused();
-		}
-		else
-		{
+		} else {
 			if (currprefs.active_nocapture_pause)
 			{
 				if (mouseactive)
 					resumepaused(2);
-			}
-			else if (currprefs.minimized_pause && !currprefs.inactive_pause)
+			} else if (currprefs.minimized_pause && !currprefs.inactive_pause)
 				resumepaused(1);
 			else if (currprefs.inactive_pause)
 				resumepaused(2);
@@ -845,6 +915,10 @@ static void amiberry_active(const AmigaMonitor* mon, const int is_minimized)
 	inputdevice_acquire(TRUE);
 	if (isfullscreen() > 0 || currprefs.capture_always)
 		setmouseactive(mon->monitor_id, 1);
+#ifdef LOGITECHLCD
+	if (!minimized)
+		lcd_priority(1);
+#endif
 	clipboard_active(1, 1);
 }
 
@@ -911,6 +985,9 @@ static void amiberry_inactive(const AmigaMonitor* mon, const int is_minimized)
 #ifdef FILESYS
 	filesys_flush_cache();
 #endif
+#ifdef LOGITECHLCD
+	lcd_priority(0);
+#endif
 }
 
 void minimizewindow(const int monid)
@@ -969,7 +1046,13 @@ void setmouseactivexy(const int monid, int x, int y, const int dir)
 		x += mon->amigawin_rect.w / 2;
 		y += mon->amigawin_rect.h / 2;
 	}
-
+	if (isfullscreen() < 0) {
+		SDL_Point pt;
+		pt.x = x;
+		pt.y = y;
+		if (!MonitorFromPoint(pt))
+			return;
+	}
 	if (mouseactive) {
 		disablecapture();
 		SDL_WarpMouseInWindow(mon->amiga_window, x, y);
@@ -1006,13 +1089,10 @@ void activationtoggle(const int monid, const bool inactiveonly)
 		if ((isfullscreen() > 0) || (isfullscreen() < 0 && currprefs.minimize_inactive)) {
 			disablecapture();
 			minimizewindow(monid);
-		}
-		else 
-		{
+		} else {
 			setmouseactive(monid, 0);
 		}
-	}
-	else {
+	} else {
 		if (!inactiveonly)
 			setmouseactive(monid, 1);
 	}
@@ -1310,17 +1390,114 @@ static void tablet_touch(unsigned long id, int pressrel, const int x, const int 
 
 static void touch_event(const unsigned long id, const int pressrel, const int x, const int y, const SDL_Rect* rcontrol)
 {
-	// No lightpen support (yet?)
-	tablet_touch(id, pressrel, x, y, rcontrol);
+	if (is_touch_lightpen()) {
+		//tablet_lightpen(x, y, -1, -1, pressrel, pressrel > 0, true, dinput_lightpen(), -1);
+	}
+	else {
+		tablet_touch(id, pressrel, x, y, rcontrol);
+	}
 }
 
-void handle_focus_gained_event(const AmigaMonitor* mon)
+static bool hasresizelimit(struct AmigaMonitor* mon)
+{
+	if (!mon->ratio_sizing || !mon->ratio_width || !mon->ratio_height)
+		return false;
+	return true;
+}
+
+static int canstretch(const AmigaMonitor* mon)
+{
+	if (isfullscreen() != 0)
+		return 0;
+	if (!mon->screen_is_picasso) {
+		if (!currprefs.gfx_windowed_resize)
+			return 0;
+		if (currprefs.gf[GF_NORMAL].gfx_filter_autoscale == AUTOSCALE_RESIZE)
+			return 0;
+		return 1;
+	}
+	else {
+		if (currprefs.rtgallowscaling || currprefs.gf[GF_RTG].gfx_filter_autoscale)
+			return 1;
+	}
+	return 0;
+}
+
+static void getsizemove(AmigaMonitor* mon)
+{
+	mon->ratio_width = mon->amigawin_rect.w;
+	mon->ratio_height = mon->amigawin_rect.h;
+	mon->ratio_adjust_x = mon->ratio_width - mon->mainwin_rect.w;
+	mon->ratio_adjust_y = mon->ratio_height - mon->mainwin_rect.h;
+	const Uint8* state = SDL_GetKeyboardState(nullptr);
+	mon->ratio_sizing = state[SDL_SCANCODE_LCTRL] || state[SDL_SCANCODE_RCTRL];
+}
+
+static int setsizemove(AmigaMonitor* mon, HWND hWnd)
+{
+	if (isfullscreen() > 0)
+		return 0;
+	if (mon->in_sizemove > 0)
+		return 0;
+	int iconic = (SDL_GetWindowFlags(hWnd) & SDL_WINDOW_MINIMIZED) != 0;
+	if (mon->amiga_window && !iconic) {
+		//write_log (_T("WM_WINDOWPOSCHANGED MAIN\n"));
+		GetWindowRect(mon->amiga_window, &mon->mainwin_rect);
+		updatewinrect(mon, false);
+		updatemouseclip(mon);
+		if (minimized) {
+			unsetminimized(mon->monitor_id);
+			amiberry_active(mon, minimized);
+		}
+		if (isfullscreen() == 0) {
+			static int store_xy;
+			SDL_Rect rc2;
+			GetWindowRect(mon->amiga_window, &rc2);
+			int left = rc2.x - mon->win_x_diff;
+			int top = rc2.y - mon->win_y_diff;
+			int width = rc2.w;
+			int height = rc2.h;
+			if (store_xy++) {
+				if (!mon->monitor_id) {
+					regsetint(nullptr, _T("MainPosX"), left);
+					regsetint(nullptr, _T("MainPosY"), top);
+				}
+				else {
+					TCHAR buf[100];
+					_stprintf(buf, _T("MainPosX_%d"), mon->monitor_id);
+					regsetint(nullptr, buf, left);
+					_stprintf(buf, _T("MainPosY_%d"), mon->monitor_id);
+					regsetint(nullptr, buf, top);
+				}
+			}
+			changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.x = left;
+			changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.y = top;
+			if (canstretch(mon)) {
+				int w = mon->mainwin_rect.w;
+				int h = mon->mainwin_rect.h;
+				if (w != changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.width + mon->window_extra_width ||
+					h != changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.height + mon->window_extra_height) {
+					changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.width = w - mon->window_extra_width;
+					changed_prefs.gfx_monitor[mon->monitor_id].gfx_size_win.height = h - mon->window_extra_height;
+					set_config_changed();
+				}
+				//if (mon->hStatusWnd)
+				//	SendMessage(mon->hStatusWnd, WM_SIZE, SIZE_RESTORED, MAKELONG(w, h));
+			}
+
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static void handle_focus_gained_event(const AmigaMonitor* mon)
 {
 	amiberry_active(mon, minimized);
 	unsetminimized(mon->monitor_id);
 }
 
-void handle_minimized_event(const AmigaMonitor* mon)
+static void handle_minimized_event(const AmigaMonitor* mon)
 {
 	if (!minimized)
 	{
@@ -1330,22 +1507,18 @@ void handle_minimized_event(const AmigaMonitor* mon)
 	}
 }
 
-void handle_restored_event(const AmigaMonitor* mon)
+static void handle_restored_event(const AmigaMonitor* mon)
 {
 	amiberry_active(mon, minimized);
 	unsetminimized(mon->monitor_id);
 }
 
-void handle_moved_event(AmigaMonitor* mon)
+static void handle_moved_event(AmigaMonitor* mon)
 {
-	if (isfullscreen() <= 0)
-	{
-		updatewinrect(mon, false);
-		updatemouseclip(mon);
-	}
+	setsizemove(mon, mon->amiga_window);
 }
 
-void handle_enter_event()
+static void handle_enter_event()
 {
 	mouseinside = true;
 	if (currprefs.input_tablet > 0 && currprefs.input_mouse_untrap & MOUSEUNTRAP_MAGIC && isfullscreen() <= 0)
@@ -1355,26 +1528,26 @@ void handle_enter_event()
 	}
 }
 
-void handle_leave_event()
+static void handle_leave_event()
 {
 	mouseinside = false;
 }
 
-void handle_focus_lost_event(const AmigaMonitor* mon)
+static void handle_focus_lost_event(const AmigaMonitor* mon)
 {
 	amiberry_inactive(mon, minimized);
 	if (isfullscreen() <= 0 && currprefs.minimize_inactive)
 		minimizewindow(mon->monitor_id);
 }
 
-void handle_close_event()
+static void handle_close_event()
 {
 	wait_keyrelease();
 	inputdevice_unacquire();
 	uae_quit();
 }
 
-void handle_window_event(const SDL_Event& event, AmigaMonitor* mon)
+static void handle_window_event(const SDL_Event& event, AmigaMonitor* mon)
 {
 	switch (event.window.event)
 	{
@@ -1407,12 +1580,12 @@ void handle_window_event(const SDL_Event& event, AmigaMonitor* mon)
 	}
 }
 
-void handle_quit_event()
+static void handle_quit_event()
 {
 	uae_quit();
 }
 
-void handle_clipboard_update_event()
+static void handle_clipboard_update_event()
 {
 	if (currprefs.clipboard_sharing && SDL_HasClipboardText() == SDL_TRUE)
 	{
@@ -1422,7 +1595,7 @@ void handle_clipboard_update_event()
 	}
 }
 
-void handle_joy_device_event(const int which, const bool removed)
+static void handle_joy_device_event(const int which, const bool removed)
 {
 	const didata* existing_did = &di_joystick[which];
 	if (existing_did->guid.empty() || removed)
@@ -1436,7 +1609,7 @@ void handle_joy_device_event(const int which, const bool removed)
 	}
 }
 
-void handle_controller_button_event(const SDL_Event& event)
+static void handle_controller_button_event(const SDL_Event& event)
 {
 	const auto button = event.cbutton.button;
 	const auto state = event.cbutton.state == SDL_PRESSED;
@@ -1470,7 +1643,7 @@ void handle_controller_button_event(const SDL_Event& event)
 	}
 }
 
-void handle_joy_button_event(const SDL_Event& event)
+static void handle_joy_button_event(const SDL_Event& event)
 {
 	const auto button = event.jbutton.button;
 	const auto state = event.jbutton.state == SDL_PRESSED;
@@ -1503,7 +1676,7 @@ void handle_joy_button_event(const SDL_Event& event)
 	}
 }
 
-void handle_controller_axis_motion_event(const SDL_Event& event)
+static void handle_controller_axis_motion_event(const SDL_Event& event)
 {
 	const auto axis = event.caxis.axis;
 	const auto value = event.caxis.value;
@@ -1517,7 +1690,7 @@ void handle_controller_axis_motion_event(const SDL_Event& event)
 	}
 }
 
-void handle_joy_axis_motion_event(const SDL_Event& event)
+static void handle_joy_axis_motion_event(const SDL_Event& event)
 {
 	const auto axis = event.jaxis.axis;
 	const auto value = event.jaxis.value;
@@ -1532,7 +1705,7 @@ void handle_joy_axis_motion_event(const SDL_Event& event)
 	}
 }
 
-void handle_joy_hat_motion_event(const SDL_Event& event)
+static void handle_joy_hat_motion_event(const SDL_Event& event)
 {
 	const auto hat = event.jhat.hat;
 	const auto value = event.jhat.value;
@@ -1548,7 +1721,7 @@ void handle_joy_hat_motion_event(const SDL_Event& event)
 	}
 }
 
-void handle_key_event(const SDL_Event& event)
+static void handle_key_event(const SDL_Event& event)
 {
 	if (event.key.repeat != 0 || !isfocus() || (isfocus() < 2 && currprefs.input_tablet >= TABLET_MOUSEHACK && (currprefs.input_mouse_untrap & MOUSEUNTRAP_MAGIC)))
 		return;
@@ -1568,7 +1741,7 @@ void handle_key_event(const SDL_Event& event)
 	}
 }
 
-void handle_finger_event(const SDL_Event& event)
+static void handle_finger_event(const SDL_Event& event)
 {
 	if (!isfocus() || event.tfinger.fingerId != 0)
 		return;
@@ -1583,7 +1756,7 @@ void handle_finger_event(const SDL_Event& event)
 	}
 }
 
-void handle_mouse_button_event(const SDL_Event& event, const AmigaMonitor* mon)
+static void handle_mouse_button_event(const SDL_Event& event, const AmigaMonitor* mon)
 {
 	const auto button = event.button.button;
 	const auto state = event.button.state == SDL_PRESSED;
@@ -1623,7 +1796,7 @@ void handle_mouse_button_event(const SDL_Event& event, const AmigaMonitor* mon)
 	}
 }
 
-void handle_finger_motion_event(const SDL_Event& event)
+static void handle_finger_motion_event(const SDL_Event& event)
 {
 	if (isfocus() && event.tfinger.fingerId == 0)
 	{
@@ -1632,7 +1805,7 @@ void handle_finger_motion_event(const SDL_Event& event)
 	}
 }
 
-void handle_mouse_motion_event(const SDL_Event& event, const AmigaMonitor* mon)
+static void handle_mouse_motion_event(const SDL_Event& event, const AmigaMonitor* mon)
 {
 	monitor_off = 0;
 
@@ -1688,7 +1861,7 @@ void handle_mouse_motion_event(const SDL_Event& event, const AmigaMonitor* mon)
 	}
 }
 
-void handle_mouse_wheel_event(const SDL_Event& event)
+static void handle_mouse_wheel_event(const SDL_Event& event)
 {
 	if (isfocus() <= 0) return;
 	
@@ -1709,7 +1882,7 @@ void handle_mouse_wheel_event(const SDL_Event& event)
 		setmousebuttonstate(0, 6, -1);
 }
 
-void handle_pen_event(const SDL_Event& event)
+static void handle_pen_event(const SDL_Event& event)
 {
 	//TODO Implement with SDL3 for Tablet support
 	//if (inputdevice_is_tablet() <= 0 && !currprefs.tablet_library && !is_touch_lightpen()) {
@@ -1737,7 +1910,7 @@ void handle_pen_event(const SDL_Event& event)
 	//}
 }
 
-void process_event(const SDL_Event& event)
+static void process_event(const SDL_Event& event)
 {
 	AmigaMonitor* mon = &AMonitors[0];
 
@@ -1843,24 +2016,6 @@ void update_clipboard()
 	}
 }
 
-static int canstretch(const AmigaMonitor* mon)
-{
-	if (isfullscreen() != 0)
-		return 0;
-	if (!mon->screen_is_picasso) {
-		if (!currprefs.gfx_windowed_resize)
-			return 0;
-		if (currprefs.gf[GF_NORMAL].gfx_filter_autoscale == AUTOSCALE_RESIZE)
-			return 0;
-		return 1;
-	}
-	else {
-		if (currprefs.rtgallowscaling || currprefs.gf[GF_RTG].gfx_filter_autoscale)
-			return 1;
-	}
-	return 0;
-}
-
 int handle_msgpump(bool vblank)
 {
 	lctrl_pressed = rctrl_pressed = lalt_pressed = ralt_pressed = lshift_pressed = rshift_pressed = lgui_pressed = rgui_pressed = false;
@@ -1946,7 +2101,7 @@ void logging_init()
 
 		logging_started = 1;
 		first++;
-		write_log("%s Logfile\n\n", get_version_string().c_str());
+		write_log("%s Logfile\n\n", VersionStr);
 		write_log("%s\n", get_sdl2_version_string().c_str());
 		regstatus();
 	}
@@ -2332,7 +2487,7 @@ void target_default_options(uae_prefs* p, const int type)
 		//p->filesystem_mangle_reserved_names = true;
 	}
 
-	p->multithreaded_drawing = amiberry_options.default_multithreaded_drawing;
+	multithread_enabled = amiberry_options.default_multithreaded_drawing;
 
 	p->kbd_led_num = -1; // No status on numlock
 	p->kbd_led_scr = -1; // No status on scrollock
@@ -4682,6 +4837,109 @@ const TCHAR** uaenative_get_library_dirs()
 	return nats;
 }
 
+static int parseversion(TCHAR** vs)
+{
+	TCHAR tmp[10];
+	int i;
+
+	i = 0;
+	while (**vs >= '0' && **vs <= '9') {
+		if (i >= sizeof(tmp) / sizeof(TCHAR))
+			return 0;
+		tmp[i++] = **vs;
+		(*vs)++;
+	}
+	if (**vs == '.')
+		(*vs)++;
+	tmp[i] = 0;
+	return _tstol(tmp);
+}
+
+static int checkversion(TCHAR* vs, int* verp)
+{
+	int ver;
+	if (_tcslen(vs) < 10)
+		return 0;
+	if (_tcsncmp(vs, _T("Amiberry "), 7))
+		return 0;
+	vs += 7;
+	ver = parseversion(&vs) << 16;
+	ver |= parseversion(&vs) << 8;
+	ver |= parseversion(&vs);
+	if (verp)
+		*verp = ver;
+	if (ver >= ((UAEMAJOR << 16) | (UAEMINOR << 8) | UAESUBREV))
+		return 0;
+	return 1;
+}
+
+static void initialize_ini()
+{
+	int size;
+	TCHAR version_char[100];
+
+	size = sizeof(version_char) / sizeof(TCHAR);
+	if (regquerystr(nullptr, _T("Version"), version_char, &size)) {
+		int ver = 0;
+		if (checkversion(version_char, &ver)) {
+			regsetstr(nullptr, _T("Version"), VersionStr);
+		}
+	}
+	else {
+		regsetstr(nullptr, _T("Version"), VersionStr);
+	}
+
+	if (!regexists(nullptr, _T("MainPosX")) || !regexists(nullptr, _T("GUIPosX"))) {
+		SDL_DisplayMode dm;
+		SDL_GetCurrentDisplayMode(0, &dm);
+		int x = dm.w;
+		int y = dm.h;
+		const int dpi = getdpiformonitor(0);
+		x = (x - (GUI_WIDTH * dpi / 96)) / 2;
+		y = (y - (GUI_HEIGHT * dpi / 96)) / 2;
+		x = std::max(x, 10);
+		y = std::max(y, 10);
+		/* Create and initialize all our sub-keys to the default values */
+		regsetint(nullptr, _T("MainPosX"), x);
+		regsetint(nullptr, _T("MainPosY"), y);
+		regsetint(nullptr, _T("GUIPosX"), x);
+		regsetint(nullptr, _T("GUIPosY"), y);
+	}
+
+	read_rom_list(true);
+	load_keyring(nullptr, nullptr);
+}
+
+static void makeverstr(TCHAR* s)
+{
+	if (_tcslen(AMIBERRYBETA) > 0) {
+		if (AMIBERRYPUBLICBETA == 2) {
+			_stprintf(BetaStr, _T(" (DevAlpha %s, %d.%02d.%02d)"), AMIBERRYBETA,
+				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
+		}
+		else {
+			_stprintf(BetaStr, _T(" (%sBeta %s, %d.%02d.%02d)"), AMIBERRYPUBLICBETA > 0 ? _T("Public ") : _T(""), AMIBERRYBETA,
+				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
+		}
+#ifdef _WIN64
+		_tcscat(BetaStr, _T(" 64-bit"));
+#endif
+		_stprintf(s, _T("Amiberry %d.%d.%d%s%s"),
+			UAEMAJOR, UAEMINOR, UAESUBREV, AMIBERRYREV, BetaStr);
+	}
+	else {
+		_stprintf(s, _T("Amiberry %d.%d.%d%s (%d.%02d.%02d)"),
+			UAEMAJOR, UAEMINOR, UAESUBREV, AMIBERRYREV, GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
+#ifdef _WIN64
+		_tcscat(s, _T(" 64-bit"));
+#endif
+	}
+	if (_tcslen(AMIBERRYEXTRA) > 0) {
+		_tcscat(s, _T(" "));
+		_tcscat(s, AMIBERRYEXTRA);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	for (auto i = 1; i < argc; i++) {
@@ -4728,6 +4986,7 @@ int main(int argc, char* argv[])
 	}
 	create_missing_amiberry_folders();
 
+	makeverstr(VersionStr);
 	// Parse command line and remove used amiberry specific args
 	// and modify both argc & argv accordingly
 	if (!parse_amiberry_cmd_line(&argc, argv, 1))
@@ -4803,8 +5062,7 @@ int main(int argc, char* argv[])
 #endif
 	(void)atexit(SDL_Quit);
 
-	read_rom_list(true);
-	load_keyring(nullptr, nullptr);
+	initialize_ini();
 	write_log(_T("Enumerating display devices.. \n"));
 	enumeratedisplays();
 	write_log(_T("Sorting devices and modes...\n"));
@@ -5188,7 +5446,7 @@ void target_setdefaultstatefilename(const TCHAR* name)
 	else {
 		const TCHAR* p2 = _tcsrchr(name, '\\');
 		const TCHAR* p3 = _tcsrchr(name, '/');
-		const TCHAR* p1 = NULL;
+		const TCHAR* p1 = nullptr;
 		if (p2 >= p3) {
 			p1 = p2;
 		}

@@ -10,6 +10,8 @@
 #include "rommgr.h"
 #include "specialmonitors.h"
 
+extern int multithread_enabled;
+
 static gcn::Window* grpChipset;
 static gcn::RadioButton* optOCS;
 static gcn::RadioButton* optECSAgnus;
@@ -169,7 +171,7 @@ public:
 			built_in_chipset_prefs(&changed_prefs);
 		}
 
-		changed_prefs.multithreaded_drawing = chkMultithreadedDrawing->isSelected();
+		multithread_enabled = chkMultithreadedDrawing->isSelected();
 
 		RefreshPanelCPU();
 		RefreshPanelQuickstart();
@@ -532,7 +534,7 @@ void RefreshPanelChipset()
 	chkSubpixelEmu->setSelected(changed_prefs.chipset_hr);
 	chkBlitImmed->setSelected(changed_prefs.immediate_blits);
 	chkBlitWait->setSelected(changed_prefs.waiting_blits);
-	chkMultithreadedDrawing->setSelected(changed_prefs.multithreaded_drawing);
+	chkMultithreadedDrawing->setSelected(multithread_enabled);
 	cboSpecialMonitors->setSelected(changed_prefs.monitoremu);
 
 	if (changed_prefs.collision_level == 0)

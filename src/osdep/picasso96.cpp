@@ -69,7 +69,7 @@
 #include "drawing.h"
 #include "inputdevice.h"
 #include "debug.h"
-//#include "registry.h"
+#include "registry.h"
 #ifdef RETROPLATFORM
 #include "rp.h"
 #endif
@@ -5799,7 +5799,7 @@ uae_u8 *uaegfx_getrtgbuffer(const int monid, int *widthp, int *heightp, int *pit
 	convert[0] = getconvert (state->RGBFormat, pixbytes);
 	convert[1] = convert[0];
 	alloc_colors_picasso(8, 8, 8, 16, 8, 0, state->RGBFormat, p96_rgbx16); // BGR
-	
+
 	copyall (monid, src + off, dst, width, height, state->BytesPerRow, state->BytesPerPixel, width * pixbytes, pixbytes, convert);
 	if (pixbytes == 1) {
 		for (int i = 0; i < 256; i++) {
@@ -5953,8 +5953,8 @@ static void picasso_flushpixels(int index, uae_u8 *src, int off, bool render)
 
 			if (!split && vidinfo->rtg_clear_flag) {
 				uae_u8 *p2 = dst;
-				for (int h = 0; h < vidinfo->height; h++) {
-					memset(p2, 0, vidinfo->width * vidinfo->pixbytes);
+				for (int h = 0; h < vidinfo->maxheight; h++) {
+					memset(p2, 0, vidinfo->maxwidth * vidinfo->pixbytes);
 					p2 += vidinfo->rowbytes;
 				}
 				vidinfo->rtg_clear_flag--;
