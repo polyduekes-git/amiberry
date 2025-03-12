@@ -4598,6 +4598,7 @@ void inputdevice_do_kb_reset(void)
 			uae_reset(0, 1);
 		} else {
 			keyboard_reset_seq_mode = 4;
+			cpu_inreset();
 		}
 	} else {
 		uae_reset(0, 1);

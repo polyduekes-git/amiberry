@@ -72,7 +72,7 @@ extern int bits_in_mask(unsigned long mask);
 extern int mask_shift(unsigned long mask);
 extern uae_u32 doMask(uae_u32 p, int bits, int shift);
 extern uae_u32 doMask256(int p, int bits, int shift);
-extern void alloc_colors64k(int monid, int, int, int, int, int, int, int, int, int, int, bool);
+extern void alloc_colors64k(int monid, int, int, int, int, int, int, int, int, int, int);
 extern void alloc_colors_rgb(int rw, int gw, int bw, int rs, int gs, int bs, int aw, int as, int alpha, int byte_swap,
 	uae_u32* rc, uae_u32* gc, uae_u32* bc);
 extern void alloc_colors_picasso(int rw, int gw, int bw, int rs, int gs, int bs, int rgbfmt, uae_u32* rgbx16);
@@ -104,7 +104,7 @@ struct vidbuffer
 	uae_u8* bufmem, * bufmemend;
 	uae_u8* realbufmem;
 	uae_u8* bufmem_allocated;
-	bool bufmem_lockable;
+	bool initialized;
 	bool locked;
 	bool vram_buffer;
 	int rowbytes; /* Bytes per row in the memory pointed at by bufmem. */
@@ -121,8 +121,8 @@ struct vidbuffer
 	/* same but doublescan multiplier included */
 	int inwidth2;
 	int inheight2;
-	/* use drawbuffer instead */
-	bool nativepositioning;
+	/* static, hardwired screen position and size (A2024) */
+	bool hardwiredpositioning;
 	/* extra width, chipset hpos extra in right border */
 	int extrawidth, extraheight;
 
