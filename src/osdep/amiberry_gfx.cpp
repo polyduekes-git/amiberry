@@ -326,7 +326,7 @@ static bool SDL2_alloctexture(int monid, int w, int h)
 		SDL_DestroyTexture(amiga_texture);
 
 	AmigaMonitor* mon = &AMonitors[0];
-	amiga_texture = SDL_CreateTexture(mon->amiga_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, w, h);
+	amiga_texture = SDL_CreateTexture(mon->amiga_renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, amiga_surface->w, amiga_surface->h);
 	return amiga_texture != nullptr;
 #endif
 }
@@ -698,8 +698,8 @@ static bool get_display_vblank_params(int displayindex, int* activeheightp, int*
 		*activeheightp = usable_bounds.h;
 	if (totalheightp)
 		*totalheightp = bounds.h;
-	const float vblank = static_cast<float>(dm.refresh_rate);
-	const float hblank = static_cast<float>(31000); // faking hblank, since SDL2 doesn't provide a way to get the real one
+	const auto vblank = static_cast<float>(dm.refresh_rate);
+	const auto hblank = static_cast<float>(31000); // faking hblank, since SDL2 doesn't provide a way to get the real one
 	if (vblankp)
 		*vblankp = vblank;
 	if (hblankp)
@@ -1344,8 +1344,8 @@ int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)
 		// Benchmarks have shown that Locking and Unlocking the Texture is slower than just calling UpdateTexture
 		// Therefore, this is disabled in Amiberry.
 		//
-		//int pitch;
-		//SDL_LockTexture(amiga_texture, nullptr, reinterpret_cast<void**>(&vb->bufmem), &pitch);
+		//SDL_LockTexture(amiga_texture, nullptr, reinterpret_cast<void**>(&vb->bufmem), &vb->rowbytes);
+
 		vb->bufmem = static_cast<uae_u8*>(amiga_surface->pixels);
 		vb->rowbytes = amiga_surface->pitch;
 		vb->width_allocated = amiga_surface->w;
@@ -1365,7 +1365,7 @@ int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)
 
 void unlockscr(struct vidbuffer* vb, int y_start, int y_end)
 {
-	//gfx_lock();
+	gfx_lock();
 	vb->locked = false;
 	if (vb->vram_buffer) {
 		vb->bufmem = nullptr;
@@ -2898,12 +2898,12 @@ void close_windows(struct AmigaMonitor* mon)
 #if 0
 	S2X_free(mon->monitor_id);
 #endif
-
+#ifdef AMIBERRY
 	SDL_FreeSurface(amiga_surface);
 	amiga_surface = nullptr;
+#endif
 	freevidbuffer(mon->monitor_id, &avidinfo->drawbuffer);
 	freevidbuffer(mon->monitor_id, &avidinfo->tempbuffer);
-
 	close_hwnds(mon);
 }
 
@@ -3317,9 +3317,10 @@ static bool doInit(AmigaMonitor* mon)
 		regqueryint(NULL, wasfsname[1], &wasfs[1]);
 
 	gfxmode_reset(mon->monitor_id);
-
-	SDL_FreeSurface(amiga_surface);
-	amiga_surface = nullptr;
+	//SDL_FreeSurface(amiga_surface);
+	//amiga_surface = nullptr;
+	//freevidbuffer(mon->monitor_id, &avidinfo->drawbuffer);
+	//freevidbuffer(mon->monitor_id, &avidinfo->tempbuffer);
 
 	for (;;) {
 		updatemodes(mon);
@@ -3384,9 +3385,9 @@ static bool doInit(AmigaMonitor* mon)
 
 	//avidinfo->drawbuffer.emergmem = scrlinebuf; // memcpy from system-memory to video-memory
 
-	//avidinfo->drawbuffer.realbufmem = NULL;
-	//avidinfo->drawbuffer.bufmem = NULL;
-	//avidinfo->drawbuffer.bufmem_allocated = NULL;
+	avidinfo->drawbuffer.realbufmem = NULL;
+	avidinfo->drawbuffer.bufmem = NULL;
+	avidinfo->drawbuffer.bufmem_allocated = NULL;
 
 	avidinfo->outbuffer = &avidinfo->drawbuffer;
 
@@ -3496,6 +3497,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 		vbout->width_allocated = w;
 		vbout->height_allocated = h;
 	}
+
 	if (avidinfo->inbuffer != avidinfo->outbuffer) {
 		avidinfo->outbuffer->inwidth = w;
 		avidinfo->outbuffer->inheight = h;
