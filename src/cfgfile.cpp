@@ -1207,9 +1207,9 @@ static void cfgfile_resolve_path_out_all(const TCHAR *path, TCHAR *out, int size
 		_tcscpy(out, s);
 		xfree(s);
 	}
-	if (!save) {
-		my_resolvesoftlink(out, size, true);
-	}
+	// if (!save) {
+	// 	my_resolvesoftlink(out, size, true);
+	// }
 }
 
 void cfgfile_resolve_path_out_load(const TCHAR *path, TCHAR *out, int size, int type)
