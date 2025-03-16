@@ -3317,8 +3317,6 @@ static bool doInit(AmigaMonitor* mon)
 		regqueryint(NULL, wasfsname[1], &wasfs[1]);
 
 	gfxmode_reset(mon->monitor_id);
-	//SDL_FreeSurface(amiga_surface);
-	//amiga_surface = nullptr;
 	//freevidbuffer(mon->monitor_id, &avidinfo->drawbuffer);
 	//freevidbuffer(mon->monitor_id, &avidinfo->tempbuffer);
 
@@ -3406,7 +3404,11 @@ static bool doInit(AmigaMonitor* mon)
 		}
 
 	}
-
+	if (amiga_surface)
+	{
+		SDL_FreeSurface(amiga_surface);
+		amiga_surface = nullptr;
+	}
 	amiga_surface = SDL_CreateRGBSurfaceWithFormat(0, display_width, display_height, mon->currentmode.current_depth, pixel_format);
 
 	updatewinrect(mon, true);
