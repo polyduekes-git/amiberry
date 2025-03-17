@@ -1402,6 +1402,11 @@ static void check_led(void)
 	}
 }
 
+bool get_power_led(void)
+{
+	return led;
+}
+
 static void bfe001_change(void)
 {
 	uae_u8 v = cia[0].pra;
@@ -2100,47 +2105,46 @@ static void WriteCIAA(uae_u16 addr, uae_u8 val, uae_u32 *flags)
 		CIA_calctimers();
 		break;
 	case 14:
-	{
-		CIA_update();
-		bool handshake = (val & CR_INMODE1) != (c->t[0].cr & CR_INMODE1);
-		if (currprefs.keyboard_mode == 0) {
-			// keyboard handshake handling
-			if (currprefs.cpuboard_type != 0 && handshake) {
-				/* bleh, Phase5 CPU timed early boot key check fix.. */
-				if (m68k_getpc() >= 0xf00000 && m68k_getpc() < 0xf80000)
-					check_keyboard();
-			}
-			if ((val & CR_INMODE1) != 0 && (c->t[0].cr & CR_INMODE1) == 0) {
-				// handshake start
-				if (kblostsynccnt > 0 && currprefs.cs_kbhandshake) {
-					kbhandshakestart = get_cycles();
+		{
+			CIA_update();
+			bool handshake = (val & CR_INMODE1) != (c->t[0].cr & CR_INMODE1);
+			if (currprefs.keyboard_mode == 0) {
+				// keyboard handshake handling
+				if (currprefs.cpuboard_type != 0 && handshake) {
+					/* bleh, Phase5 CPU timed early boot key check fix.. */
+					if (m68k_getpc() >= 0xf00000 && m68k_getpc() < 0xf80000)
+						check_keyboard();
 				}
-#if KB_DEBUG
-				write_log(_T("KB_ACK_START %02x->%02x %08x\n"), c->t[0].cr, val, M68K_GETPC);
-#endif
-			}
-			else if ((val & CR_INMODE1) == 0 && (c->t[0].cr & CR_INMODE1) != 0) {
-				// handshake end
-				/* todo: check if low to high or high to low only */
-				if (kblostsynccnt > 0 && currprefs.cs_kbhandshake) {
-					evt_t len = get_cycles() - kbhandshakestart;
-					if (len < currprefs.cs_kbhandshake * CYCLE_UNIT) {
-						write_log(_T("Keyboard handshake pulse length %d < %d (CCKs)\n"), len / CYCLE_UNIT, currprefs.cs_kbhandshake);
+				if ((val & CR_INMODE1) != 0 && (c->t[0].cr & CR_INMODE1) == 0) {
+					// handshake start
+					if (kblostsynccnt > 0 && currprefs.cs_kbhandshake) {
+						kbhandshakestart = get_cycles();
 					}
-				}
-				kblostsynccnt = 0;
 #if KB_DEBUG
-				write_log(_T("KB_ACK_END %02x->%02x %08x\n"), c->t[0].cr, val, M68K_GETPC);
+					write_log(_T("KB_ACK_START %02x->%02x %08x\n"), c->t[0].cr, val, M68K_GETPC);
 #endif
+				} else if ((val & CR_INMODE1) == 0 && (c->t[0].cr & CR_INMODE1) != 0) {
+					// handshake end
+					/* todo: check if low to high or high to low only */
+					if (kblostsynccnt > 0 && currprefs.cs_kbhandshake) {
+						evt_t len = get_cycles() - kbhandshakestart;
+						if (len < currprefs.cs_kbhandshake * CYCLE_UNIT) {
+							write_log(_T("Keyboard handshake pulse length %d < %d (CCKs)\n"), len / CYCLE_UNIT, currprefs.cs_kbhandshake);
+						}
+					}
+					kblostsynccnt = 0;
+#if KB_DEBUG
+					write_log(_T("KB_ACK_END %02x->%02x %08x\n"), c->t[0].cr, val, M68K_GETPC);
+#endif
+				}
+			}
+			WriteCIAReg(0, reg, val);
+			CIA_calctimers();
+			if (currprefs.keyboard_mode > 0 && handshake) {
+				keymcu_do();
 			}
 		}
-		WriteCIAReg(0, reg, val);
-		CIA_calctimers();
-		if (currprefs.keyboard_mode > 0 && handshake) {
-			keymcu_do();
-		}
-	}
-	break;
+		break;
 	}
 }
 
@@ -2339,13 +2343,13 @@ void dumpcia(void)
 	console_out_f(_T("A: CRA %02x CRB %02x ICR %02x IM %02x TA %04x (%04x) TB %04x (%04x)\n"),
 		a->t[0].cr, a->t[1].cr, a->icr1, a->imask, a->t[0].timer - a->t[0].passed,
 		a->t[0].latch, a->t[1].timer - a->t[1].passed, a->t[1].latch);
-	console_out_f(_T("   PRA %02x [%02x] PRB %02x [%02x] DDRA %02x DDRB %02x\n"), a->pra, apra, a->prb, aprb, a->dra, a->drb);
+	console_out_f(_T("   PRA %02x [%02x] PRB %02x [%02x] DDRA %02x DDRB %02x SDR %02x\n"), a->pra, apra, a->prb, aprb, a->dra, a->drb, a->sdr);
 	console_out_f(_T("   TOD %06x (%06x) ALARM %06x %c%c CYC=%016llX\n"),
 		a->tod, a->tol, a->alarm, a->tlatch ? 'L' : '-', a->todon ? '-' : 'S', get_cycles());
 	console_out_f(_T("B: CRA %02x CRB %02x ICR %02x IM %02x TA %04x (%04x) TB %04x (%04x)\n"),
 		b->t[0].cr, b->t[1].cr, b->icr1, b->imask, b->t[0].timer - b->t[0].passed,
 		b->t[0].latch, b->t[1].timer - b->t[1].passed, b->t[1].latch);
-	console_out_f(_T("   PRA %02x [%02x] PRB %02x [%02x] DDRA %02x DDRB %02x\n"), b->pra, bpra, b->prb, bprb, b->dra, b->drb);
+	console_out_f(_T("   PRA %02x [%02x] PRB %02x [%02x] DDRA %02x DDRB %02x SDR %02x\n"), b->pra, bpra, b->prb, bprb, b->dra, b->drb, b->sdr);
 	console_out_f(_T("   TOD %06x (%06x) ALARM %06x %c%c\n"),
 		b->tod, b->tol, b->alarm, b->tlatch ? 'L' : '-', b->todon ? '-' : 'S');
 }
