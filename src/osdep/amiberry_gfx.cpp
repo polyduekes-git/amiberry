@@ -183,7 +183,7 @@ static bool ar_is_exact(const SDL_DisplayMode* mode, const int width, const int 
 // 0: Nearest Neighbor
 // 1: Linear
 // 2: Integer Scaling (this uses Nearest Neighbor)
-static void set_scaling_option(const uae_prefs* p, const int width, const int height)
+static void set_scaling_option(const int monid, const uae_prefs* p, const int width, const int height)
 {
 	if (p->scaling_method == -1)
 	{
@@ -194,7 +194,7 @@ static void set_scaling_option(const uae_prefs* p, const int width, const int he
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #else
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-			SDL_RenderSetIntegerScale(AMonitors[0].amiga_renderer, SDL_FALSE);
+			SDL_RenderSetIntegerScale(AMonitors[monid].amiga_renderer, SDL_FALSE);
 #endif
 		}
 		else
@@ -204,7 +204,7 @@ static void set_scaling_option(const uae_prefs* p, const int width, const int he
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #else
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-			SDL_RenderSetIntegerScale(AMonitors[0].amiga_renderer, SDL_FALSE);
+			SDL_RenderSetIntegerScale(AMonitors[monid].amiga_renderer, SDL_FALSE);
 #endif
 		}
 	}
@@ -215,7 +215,7 @@ static void set_scaling_option(const uae_prefs* p, const int width, const int he
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #else
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-		SDL_RenderSetIntegerScale(AMonitors[0].amiga_renderer, SDL_FALSE);
+		SDL_RenderSetIntegerScale(AMonitors[monid].amiga_renderer, SDL_FALSE);
 #endif
 	}
 	else if (p->scaling_method == 1)
@@ -225,13 +225,13 @@ static void set_scaling_option(const uae_prefs* p, const int width, const int he
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #else
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-		SDL_RenderSetIntegerScale(AMonitors[0].amiga_renderer, SDL_FALSE);
+		SDL_RenderSetIntegerScale(AMonitors[monid].amiga_renderer, SDL_FALSE);
 #endif
 	}
 	else if (p->scaling_method == 2)
 	{
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
-		SDL_RenderSetIntegerScale(AMonitors[0].amiga_renderer, SDL_TRUE);
+		SDL_RenderSetIntegerScale(AMonitors[monid].amiga_renderer, SDL_TRUE);
 	}
 #ifdef USE_OPENGL
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -315,7 +315,7 @@ static bool SDL2_alloctexture(int monid, int w, int h)
 			SDL_QueryTexture(amiga_texture, nullptr, nullptr, &width, &height);
 			if (width == -w && height == -h)
 			{
-				set_scaling_option(&currprefs, width, height);
+				set_scaling_option(monid, &currprefs, width, height);
 				return true;
 			}
 		}
@@ -3544,7 +3544,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 				render_quad = { -(w - h) / 2, (w - h) / 2, w, h };
 				crop_rect = { -(w - h) / 2, (w - h) / 2, w, h };
 			}
-			set_scaling_option(&currprefs, w, h);
+			set_scaling_option(monid, &currprefs, w, h);
 		}
 		else
 			return false;
@@ -3614,7 +3614,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 					crop_rect = { -(w - h) / 2, (w - h) / 2, w, h };
 				}
 			}
-			set_scaling_option(&currprefs, scaled_width, scaled_height);
+			set_scaling_option(monid, &currprefs, scaled_width, scaled_height);
 		}
 		else
 		{
