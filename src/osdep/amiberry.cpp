@@ -652,68 +652,7 @@ void updatemouseclip(AmigaMonitor* mon)
 	if (mon_cursorclipped) {
 		mon->amigawinclip_rect = mon->amigawin_rect;
 		if (!isfullscreen()) {
-			int idx = 0;
-			reenumeratemonitors();
-			while (Displays[idx].monitorname) {
-				SDL_Rect out;
-				MultiDisplay* md = &Displays[idx];
-				idx++;
-				if (md->rect.x == md->workrect.x && md->rect.w == md->workrect.w
-					&& md->rect.y == md->workrect.y && md->rect.h == md->workrect.h)
-					continue;
-				// not in this monitor?
-				if (!SDL_IntersectRect(&md->rect, &mon->amigawin_rect, &out))
-					continue;
-				for (int e = 0; e < 4; e++) {
-					int v1, v2, x, y;
-					int* lp;
-					switch (e)
-					{
-					case 0:
-					default:
-						v1 = md->rect.x;
-						v2 = md->workrect.x;
-						lp = &mon->amigawinclip_rect.x;
-						x = v1 - 1;
-						y = (md->rect.h) / 2;
-						break;
-					case 1:
-						v1 = md->rect.y;
-						v2 = md->workrect.y;
-						lp = &mon->amigawinclip_rect.y;
-						x = (md->rect.w) / 2;
-						y = v1 - 1;
-						break;
-					case 2:
-						v1 = md->rect.w;
-						v2 = md->workrect.w;
-						lp = &mon->amigawinclip_rect.w;
-						x = v1 + 1;
-						y = (md->rect.h) / 2;
-						break;
-					case 3:
-						v1 = md->rect.h;
-						v2 = md->workrect.h;
-						lp = &mon->amigawinclip_rect.h;
-						x = (md->rect.w) / 2;
-						y = v1 + 1;
-						break;
-					}
-					// is there another monitor sharing this edge?
-					SDL_Point pt;
-					pt.x = x;
-					pt.y = y;
-					if (MonitorFromPoint(pt))
-						continue;
-					// restrict mouse clip bounding box to this edge
-					if (e >= 2) {
-						*lp = std::min<LONG>(*lp, v2);
-					}
-					else {
-						*lp = std::max<LONG>(*lp, v2);
-					}
-				}
-			}
+			GetWindowRect(mon->amiga_window, &mon->amigawinclip_rect);
 			// Too small or invalid?
 			if (mon->amigawinclip_rect.w <= mon->amigawinclip_rect.x + 7 || mon->amigawinclip_rect.h <= mon->amigawinclip_rect.y + 7)
 				mon->amigawinclip_rect = mon->amigawin_rect;
