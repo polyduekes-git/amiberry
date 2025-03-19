@@ -81,16 +81,6 @@
 #define CARD_FLAG_CHILD 8
 #define CARD_FLAG_UAEROM 16
 
-// More information in first revision HRM Appendix_G
-#define BOARD_PROTOAUTOCONFIG 1
-
-#define BOARD_AUTOCONFIG_Z2 2
-#define BOARD_AUTOCONFIG_Z3 3
-#define BOARD_NONAUTOCONFIG_BEFORE 4
-#define BOARD_NONAUTOCONFIG_AFTER_Z2 5
-#define BOARD_NONAUTOCONFIG_AFTER_Z3 6
-#define BOARD_IGNORE 7
-
 #define KS12_BOOT_HACK 1
 
 #define EXP_DEBUG 0
@@ -239,7 +229,8 @@ static bool isnonautoconfig(int v)
 {
 	return v == BOARD_NONAUTOCONFIG_AFTER_Z2 ||
 		v == BOARD_NONAUTOCONFIG_AFTER_Z3 ||
-		v == BOARD_NONAUTOCONFIG_BEFORE;
+		v == BOARD_NONAUTOCONFIG_BEFORE ||
+		v == BOARD_PCI;
 }
 
 static bool ks12orolder(void)
