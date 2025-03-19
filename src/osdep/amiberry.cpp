@@ -657,9 +657,6 @@ void updatemouseclip(AmigaMonitor* mon)
 			if (mon->amigawinclip_rect.w <= mon->amigawinclip_rect.x + 7 || mon->amigawinclip_rect.h <= mon->amigawinclip_rect.y + 7)
 				mon->amigawinclip_rect = mon->amigawin_rect;
 		}
-		if (mon_cursorclipped == mon->monitor_id + 1) {
-
-		}
 	}
 }
 
