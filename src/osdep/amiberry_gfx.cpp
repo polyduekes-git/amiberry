@@ -376,7 +376,6 @@ static bool SDL2_renderframe(const int monid, int mode, int immediate)
 	if (amiga_texture && amiga_surface)
 	{
 		SDL_RenderClear(mon->amiga_renderer);
-		// TODO: use &crop_rect instead of nullptr here?
 		SDL_UpdateTexture(amiga_texture, nullptr, amiga_surface->pixels, amiga_surface->pitch);
 		SDL_RenderCopyEx(mon->amiga_renderer, amiga_texture, &crop_rect, &render_quad, amiberry_options.rotation_angle, nullptr, SDL_FLIP_NONE);
 		if (vkbd_allowed(monid))
