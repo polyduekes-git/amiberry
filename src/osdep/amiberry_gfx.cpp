@@ -91,7 +91,7 @@ bool kmsdrm_detected = false;
 
 static int display_width;
 static int display_height;
-Uint32 pixel_format = SDL_PIXELFORMAT_BGRA32;
+Uint32 pixel_format = SDL_PIXELFORMAT_RGBA32;
 
 static frame_time_t last_synctime;
 
@@ -240,6 +240,46 @@ static void set_scaling_option(const int monid, const uae_prefs* p, const int wi
 
 static void SDL2_getpixelformat(int depth, int* rb, int* gb, int* bb, int* rs, int* gs, int* bs, int* ab, int* as, int* a)
 {
+#ifdef AMIBERRY
+	// RGBA
+	switch (depth)
+	{
+	case 32:
+		*rb = 8;
+		*gb = 8;
+		*bb = 8;
+		*ab = 8;
+		*rs = 0;
+		*gs = 8;
+		*bs = 16;
+		*as = 24;
+		*a = 0;
+		break;
+	case 15:
+		*rb = 5;
+		*gb = 5;
+		*bb = 5;
+		*ab = 1;
+		*rs = 10;
+		*gs = 5;
+		*bs = 0;
+		*as = 15;
+		*a = 0;
+		break;
+	case 16:
+		*rb = 5;
+		*gb = 6;
+		*bb = 5;
+		*ab = 0;
+		*rs = 11;
+		*gs = 5;
+		*bs = 0;
+		*as = 0;
+		*a = 0;
+		break;
+	}
+#else
+	// BGRA
 	switch (depth)
 	{
 	case 32:
@@ -276,6 +316,7 @@ static void SDL2_getpixelformat(int depth, int* rb, int* gb, int* bb, int* rs, i
 		*a = 0;
 		break;
 	}
+#endif
 }
 
 static float SDL2_getrefreshrate(const int monid)
@@ -341,9 +382,17 @@ static void update_leds(const int monid)
 
 	if (!done) {
 		for (int i = 0; i < 256; i++) {
+#ifdef AMIBERRY
+			// RGBA
+			rc[i] = i << 0;
+			gc[i] = i << 8;
+			bc[i] = i << 16;
+#else
+			// BGRA
 			rc[i] = i << 16;
 			gc[i] = i << 8;
 			bc[i] = i << 0;
+#endif
 			a[i] = i << 24;
 		}
 		done = 1;
@@ -2427,7 +2476,6 @@ void init_colors(const int monid)
 	/* init colors */
 	SDL2_getpixelformat(mon->currentmode.current_depth,
 		&red_bits, &green_bits, &blue_bits, &red_shift, &green_shift, &blue_shift, &alpha_bits, &alpha_shift, &alpha);
-
 
 	alloc_colors64k(monid, red_bits, green_bits, blue_bits, red_shift, green_shift, blue_shift, alpha_bits, alpha_shift, alpha, 0);
 	notice_new_xcolors();
