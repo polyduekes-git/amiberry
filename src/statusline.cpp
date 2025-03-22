@@ -236,14 +236,12 @@ void draw_status_line_single(int monid, uae_u8 *buf, int bpp, int y, int totalwi
 			pos = 6;
 			if (gui_data.cd >= 0) {
 				on = gui_data.cd & (LED_CD_AUDIO | LED_CD_ACTIVE);
-#ifdef _WIN32
-				on_rgb = (on & LED_CD_AUDIO) ? 0x00cc00 : 0x0000cc;
-#else
-				on_rgb = (on & LED_CD_AUDIO) ? 0x00cc00 : 0xcc0000;
-#endif
-				if ((gui_data.cd & LED_CD_ACTIVE2) && !(gui_data.cd & LED_CD_AUDIO)) {
-					on_rgb &= 0xfefefe;
-					on_rgb >>= 1;
+				if (on & LED_CD_AUDIO) {
+					on_rgb = 0x009900;
+				} else if (on == LED_CD_ACTIVE) {
+					on_rgb = 0x000099;
+				} else {
+					on = 0;
 				}
 #ifdef _WIN32
 				off_rgb = 0x000033;
