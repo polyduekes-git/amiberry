@@ -825,7 +825,7 @@ static void setupcursor()
 	gfx_lock ();
 	setupcursor_needed = 1;
 	if (cursordata && cursorwidth && cursorheight) {
-		p96_cursor_surface = SDL_CreateRGBSurfaceWithFormat(0, cursorwidth, cursorheight, 32, SDL_PIXELFORMAT_RGBA32);
+		p96_cursor_surface = SDL_CreateRGBSurfaceWithFormat(0, cursorwidth, cursorheight, 32, SDL_PIXELFORMAT_BGR888);
 
 		for (int y = 0; y < cursorheight; y++) {
 			uae_u8 *p1 = cursordata + cursorwidth * y;
@@ -839,7 +839,7 @@ static void setupcursor()
 			}
 		}
 
-		auto* p96_formatted_cursor_surface = SDL_ConvertSurfaceFormat(p96_cursor_surface, SDL_PIXELFORMAT_RGBA32, 0);
+		auto* p96_formatted_cursor_surface = SDL_ConvertSurfaceFormat(p96_cursor_surface, SDL_PIXELFORMAT_BGR888, 0);
 		if (p96_formatted_cursor_surface != nullptr) {
 			SDL_FreeSurface(p96_cursor_surface);
 			if (p96_cursor != nullptr) {
@@ -4933,267 +4933,246 @@ static void copyrow(int monid, uae_u8 *src, uae_u8 *dst, int x, int y, int width
 	uae_u8 *src2 = src + y * srcbytesperrow;
 	uae_u8 *dst2 = dst + dy * dstbytesperrow;
 
-#ifdef AMIBERRY
 	// In Amiberry, we only use these two modes, so we can optimize this as much as possible
 	// Use memcpy for copying memory
-	if (convert_mode == RGBFB_R8G8B8A8_32 || convert_mode == RGBFB_R5G6B5PC_16) {
+	if (convert_mode == RGBFB_R8G8B8A8_32 || convert_mode == RGBFB_R5G6B5PC_16 || convert_mode == RGBFB_R5G5B5) {
 		std::memcpy(dst2 + dx * dstpix, src2 + x * srcpix, width * dstpix);
 		return;
 	}
-#else
-	// native match?
-	//if (currprefs.gfx_api) {
-		switch (convert_mode) {
 
-			case RGBFB_B8G8R8A8_32:
-			case RGBFB_R5G6B5PC_16:
-				memcpy(dst2 + dx * dstpix, src2 + x * srcpix, width * dstpix);
-				return;
+	endx4 = endx & ~3;
+
+	switch (convert_mode)
+	{
+		/* 24bit->32bit */
+	case RGBFB_R8G8B8_32:
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = (src2[x * 3 + 0] << 16) | (src2[x * 3 + 1] << 8) | (src2[x * 3 + 2] << 0);
+			x++;
+			dx++;
 		}
-	//} else {
-#endif
-		endx4 = endx & ~3;
-
-		switch (convert_mode) {
-			/* 24bit->32bit */
-			case RGBFB_R8G8B8_32:
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = (src2[x * 3 + 0] << 16) | (src2[x * 3 + 1] << 8) | (src2[x * 3 + 2] << 0);
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_B8G8R8_32:
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = reinterpret_cast<uae_u32*>(src2 + x * 3)[0] & 0x00ffffff;
-					x++;
-					dx++;
-				}
-				break;
-
-				/* 32bit->32bit */
-			case RGBFB_R8G8B8A8_32:
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = (src2[x * 4 + 0] << 16) | (src2[x * 4 + 1] << 8) | (src2[x * 4 + 2] << 0);
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_A8R8G8B8_32:
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = (src2[x * 4 + 1] << 16) | (src2[x * 4 + 2] << 8) | (src2[x * 4 + 3] << 0);
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_A8B8G8R8_32:
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = reinterpret_cast<uae_u32*>(src2)[x] >> 8;
-					x++;
-					dx++;
-				}
-				break;
-
-				/* 15/16bit->32bit */
-			case RGBFB_R5G6B5PC_32:
-			case RGBFB_R5G5B5PC_32:
-			case RGBFB_R5G6B5_32:
-			case RGBFB_R5G5B5_32:
-			case RGBFB_B5G6R5PC_32:
-			case RGBFB_B5G5R5PC_32: {
-				while ((x & 3) && x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx4) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]];
-					x++;
-					dx++;
-				}
-			}
-				break;
-
-				/* 16/15bit->16bit */
-			case RGBFB_R5G5B5PC_16:
-			case RGBFB_R5G6B5_16:
-			case RGBFB_R5G5B5_16:
-			case RGBFB_B5G5R5PC_16:
-			case RGBFB_B5G6R5PC_16:
-			case RGBFB_R5G6B5PC_16: {
-				while ((x & 3) && x < endx) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-				}
-				while (x < endx4) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-				}
-				while (x < endx) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = static_cast<uae_u16>(p96_rgbx16p[reinterpret_cast<uae_u16*>(src2)[x]]);
-					x++;
-					dx++;
-				}
-			}
-				break;
-
-				/* 24bit->16bit */
-			case RGBFB_R8G8B8_16:
-				while (x < endx) {
-					uae_u8 r, g, b;
-					r = src2[x * 3 + 0];
-					g = src2[x * 3 + 1];
-					b = src2[x * 3 + 2];
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((r >> 3) & 0x1f) << 11) | (((g >> 2) & 0x3f) << 5) |
-					                                     (((b >> 3) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_B8G8R8_16:
-				while (x < endx) {
-					uae_u32 v;
-					v = reinterpret_cast<uae_u32*>(&src2[x * 3])[0] >> 8;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((v >> (8 + 3)) & 0x1f) << 11) |
-					                                     (((v >> (0 + 2)) & 0x3f) << 5) |
-					                                     (((v >> (16 + 3)) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-
-				/* 32bit->16bit */
-			case RGBFB_R8G8B8A8_16:
-				while (x < endx) {
-					uae_u32 v;
-					v = reinterpret_cast<uae_u32*>(src2)[x];
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((v >> (0 + 3)) & 0x1f) << 11) |
-					                                     (((v >> (8 + 2)) & 0x3f) << 5) |
-					                                     (((v >> (16 + 3)) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_A8R8G8B8_16:
-				while (x < endx) {
-					uae_u32 v;
-					v = reinterpret_cast<uae_u32*>(src2)[x];
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((v >> (8 + 3)) & 0x1f) << 11) |
-					                                     (((v >> (16 + 2)) & 0x3f) << 5) |
-					                                     (((v >> (24 + 3)) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_A8B8G8R8_16:
-				while (x < endx) {
-					uae_u32 v;
-					v = reinterpret_cast<uae_u32*>(src2)[x];
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((v >> (24 + 3)) & 0x1f) << 11) |
-					                                     (((v >> (16 + 2)) & 0x3f) << 5) |
-					                                     (((v >> (8 + 3)) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-			case RGBFB_B8G8R8A8_16:
-				while (x < endx) {
-					uae_u32 v;
-					v = reinterpret_cast<uae_u32*>(src2)[x];
-					reinterpret_cast<uae_u16*>(dst2)[dx] = p96_rgbx16p[(((v >> (16 + 3)) & 0x1f) << 11) |
-					                                     (((v >> (8 + 2)) & 0x3f) << 5) |
-					                                     (((v >> (0 + 3)) & 0x1f) << 0)];
-					x++;
-					dx++;
-				}
-				break;
-
-				/* 8bit->32bit */
-			case RGBFB_CLUT_RGBFB_32: {
-				while ((x & 3) && x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx4) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx) {
-					reinterpret_cast<uae_u32*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-			}
-				break;
-
-				/* 8bit->16bit */
-			case RGBFB_CLUT_RGBFB_16: {
-				while ((x & 3) && x < endx) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx4) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-				while (x < endx) {
-					reinterpret_cast<uae_u16*>(dst2)[dx] = clut[src2[x]];
-					x++;
-					dx++;
-				}
-			}
-				break;
-			default: // never
-				break;
+		break;
+	case RGBFB_B8G8R8_32:
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = ((uae_u32*)(src2 + x * 3))[0] & 0x00ffffff;
+			x++;
+			dx++;
 		}
-	//}
+		break;
+
+		/* 32bit->32bit */
+	case RGBFB_R8G8B8A8_32:
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = (src2[x * 4 + 0] << 16) | (src2[x * 4 + 1] << 8) | (src2[x * 4 + 2] << 0);
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_A8R8G8B8_32:
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = (src2[x * 4 + 1] << 16) | (src2[x * 4 + 2] << 8) | (src2[x * 4 + 3] << 0);
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_A8B8G8R8_32:
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = ((uae_u32*)src2)[x] >> 8;
+			x++;
+			dx++;
+		}
+		break;
+
+		/* 15/16bit->32bit */
+	case RGBFB_R5G6B5PC_32:
+	case RGBFB_R5G5B5PC_32:
+	case RGBFB_R5G6B5_32:
+	case RGBFB_R5G5B5_32:
+	case RGBFB_B5G6R5PC_32:
+	case RGBFB_B5G5R5PC_32:
+	{
+		while ((x & 3) && x < endx) {
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx4) {
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+	}
+	break;
+
+	/* 16/15bit->16bit */
+	case RGBFB_R5G5B5PC_16:
+	case RGBFB_R5G6B5_16:
+	case RGBFB_R5G5B5_16:
+	case RGBFB_B5G5R5PC_16:
+	case RGBFB_B5G6R5PC_16:
+	case RGBFB_R5G6B5PC_16:
+	{
+		while ((x & 3) && x < endx) {
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx4) {
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx) {
+			((uae_u16*)dst2)[dx] = (uae_u16)p96_rgbx16p[((uae_u16*)src2)[x]];
+			x++;
+			dx++;
+		}
+	}
+	break;
+
+	/* 24bit->16bit */
+	case RGBFB_R8G8B8_16:
+		while (x < endx) {
+			uae_u8 r, g, b;
+			r = src2[x * 3 + 0];
+			g = src2[x * 3 + 1];
+			b = src2[x * 3 + 2];
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((r >> 3) & 0x1f) << 11) | (((g >> 2) & 0x3f) << 5) | (((b >> 3) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_B8G8R8_16:
+		while (x < endx) {
+			uae_u32 v;
+			v = ((uae_u32*)(&src2[x * 3]))[0] >> 8;
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((v >> (8 + 3)) & 0x1f) << 11) | (((v >> (0 + 2)) & 0x3f) << 5) | (((v >> (16 + 3)) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+
+		/* 32bit->16bit */
+	case RGBFB_R8G8B8A8_16:
+		while (x < endx) {
+			uae_u32 v;
+			v = ((uae_u32*)src2)[x];
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((v >> (0 + 3)) & 0x1f) << 11) | (((v >> (8 + 2)) & 0x3f) << 5) | (((v >> (16 + 3)) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_A8R8G8B8_16:
+		while (x < endx) {
+			uae_u32 v;
+			v = ((uae_u32*)src2)[x];
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((v >> (8 + 3)) & 0x1f) << 11) | (((v >> (16 + 2)) & 0x3f) << 5) | (((v >> (24 + 3)) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_A8B8G8R8_16:
+		while (x < endx) {
+			uae_u32 v;
+			v = ((uae_u32*)src2)[x];
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((v >> (24 + 3)) & 0x1f) << 11) | (((v >> (16 + 2)) & 0x3f) << 5) | (((v >> (8 + 3)) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+	case RGBFB_B8G8R8A8_16:
+		while (x < endx) {
+			uae_u32 v;
+			v = ((uae_u32*)src2)[x];
+			((uae_u16*)dst2)[dx] = p96_rgbx16p[(((v >> (16 + 3)) & 0x1f) << 11) | (((v >> (8 + 2)) & 0x3f) << 5) | (((v >> (0 + 3)) & 0x1f) << 0)];
+			x++;
+			dx++;
+		}
+		break;
+
+		/* 8bit->32bit */
+	case RGBFB_CLUT_RGBFB_32:
+	{
+		while ((x & 3) && x < endx) {
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx4) {
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx) {
+			((uae_u32*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+	}
+	break;
+
+	/* 8bit->16bit */
+	case RGBFB_CLUT_RGBFB_16:
+	{
+		while ((x & 3) && x < endx) {
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx4) {
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+		while (x < endx) {
+			((uae_u16*)dst2)[dx] = clut[src2[x]];
+			x++;
+			dx++;
+		}
+	}
+	break;
+	}
 }
 
 static uae_u16 yuvtorgb(uae_u8 yx, uae_u8 ux, uae_u8 vx)

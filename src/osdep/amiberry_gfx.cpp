@@ -91,7 +91,7 @@ bool kmsdrm_detected = false;
 
 static int display_width;
 static int display_height;
-Uint32 pixel_format = SDL_PIXELFORMAT_RGBA32;
+Uint32 pixel_format = SDL_PIXELFORMAT_BGR888;
 
 static frame_time_t last_synctime;
 
@@ -122,16 +122,16 @@ bool gfx_hdr;
 
 int reopen(struct AmigaMonitor*, int, bool);
 
-static SDL_mutex* screen_cs = nullptr;
-static bool screen_cs_allocated;
+//static SDL_mutex* screen_cs = nullptr;
+//static bool screen_cs_allocated;
 
 void gfx_lock()
 {
-	SDL_LockMutex(screen_cs);
+	//SDL_LockMutex(screen_cs);
 }
 void gfx_unlock()
 {
-	SDL_UnlockMutex(screen_cs);
+	//SDL_UnlockMutex(screen_cs);
 }
 
 #ifdef AMIBERRY
@@ -240,8 +240,6 @@ static void set_scaling_option(const int monid, const uae_prefs* p, const int wi
 
 static void SDL2_getpixelformat(int depth, int* rb, int* gb, int* bb, int* rs, int* gs, int* bs, int* ab, int* as, int* a)
 {
-#ifdef AMIBERRY
-	// RGBA
 	switch (depth)
 	{
 	case 32:
@@ -278,45 +276,6 @@ static void SDL2_getpixelformat(int depth, int* rb, int* gb, int* bb, int* rs, i
 		*a = 0;
 		break;
 	}
-#else
-	// BGRA
-	switch (depth)
-	{
-	case 32:
-		*rb = 8;
-		*gb = 8;
-		*bb = 8;
-		*ab = 8;
-		*rs = 16;
-		*gs = 8;
-		*bs = 0;
-		*as = 24;
-		*a = 0;
-		break;
-	case 15:
-		*rb = 5;
-		*gb = 5;
-		*bb = 5;
-		*ab = 1;
-		*rs = 10;
-		*gs = 5;
-		*bs = 0;
-		*as = 15;
-		*a = 0;
-		break;
-	case 16:
-		*rb = 5;
-		*gb = 6;
-		*bb = 5;
-		*ab = 0;
-		*rs = 11;
-		*gs = 5;
-		*bs = 0;
-		*as = 0;
-		*a = 0;
-		break;
-	}
-#endif
 }
 
 static float SDL2_getrefreshrate(const int monid)
@@ -353,8 +312,9 @@ static bool SDL2_alloctexture(int monid, int w, int h)
 		if (amiga_texture)
 		{
 			int width, height;
-			SDL_QueryTexture(amiga_texture, nullptr, nullptr, &width, &height);
-			if (width == -w && height == -h)
+			Uint32 format;
+			SDL_QueryTexture(amiga_texture, &format, nullptr, &width, &height);
+			if (width == -w && height == -h && format == pixel_format)
 			{
 				set_scaling_option(monid, &currprefs, width, height);
 				return true;
@@ -1303,9 +1263,9 @@ bool render_screen(const int monid, const int mode, const bool immediate)
 			return mon->render_ok;
 		}
 	}
-	gfx_lock();
+	//gfx_lock();
 	mon->render_ok = SDL2_renderframe(monid, mode, immediate);
-	gfx_unlock();
+	//gfx_unlock();
 	return mon->render_ok;
 }
 
@@ -1344,7 +1304,7 @@ void show_screen(const int monid, int mode)
 	const amigadisplay* ad = &adisplays[monid];
 	struct apmode* ap = ad->picasso_on ? &currprefs.gfx_apmode[1] : &currprefs.gfx_apmode[0];
 
-	gfx_lock();
+	//gfx_lock();
 	//if (mode == 2 || mode == 3 || mode == 4) {
 	//	if ((mon->currentmode.flags & DM_D3D) && D3D_showframe_special && ap->gfx_strobo) {
 	//		if (mode == 4) {
@@ -1360,7 +1320,7 @@ void show_screen(const int monid, int mode)
 	//	return;
 	//}
 	if (mode >= 0 && !mon->render_ok) {
-		gfx_unlock();
+		//gfx_unlock();
 		return;
 	}
 #ifdef USE_OPENGL
@@ -1375,7 +1335,7 @@ void show_screen(const int monid, int mode)
 #else
 	SDL2_showframe(monid);
 #endif
-	gfx_unlock();
+	//gfx_unlock();
 	mon->render_ok = false;
 }
 
@@ -1387,7 +1347,7 @@ int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)
 	if (!mon->amiga_window || !amiga_surface)
 		return ret;
 
-	gfx_lock();
+	//gfx_lock();
 	if (vb->vram_buffer) {
 		// Benchmarks have shown that Locking and Unlocking the Texture is slower than just calling UpdateTexture
 		// Therefore, this is disabled in Amiberry.
@@ -1407,20 +1367,20 @@ int lockscr(struct vidbuffer* vb, bool fullupdate, bool skip)
 	if (ret) {
 		vb->locked = true;
 	}
-	gfx_unlock();
+	//gfx_unlock();
 	return ret;
 }
 
 void unlockscr(struct vidbuffer* vb, int y_start, int y_end)
 {
-	gfx_lock();
+	//gfx_lock();
 	vb->locked = false;
 	if (vb->vram_buffer) {
 		vb->bufmem = nullptr;
 		// Not using SDL2_UnlockTexture due to performance reasons, see lockscr for details
 		//SDL_UnlockTexture(amiga_texture);
 	}
-	gfx_unlock();
+	//gfx_unlock();
 }
 
 void flush_clear_screen(struct vidbuffer* vb)
@@ -1477,10 +1437,10 @@ uae_u8* gfx_lock_picasso(const int monid, bool fullupdate)
 	if (mon->rtg_locked) {
 		return p;
 	}
-	gfx_lock();
+	//gfx_lock();
 	p = gfx_lock_picasso2(monid, fullupdate);
 	if (!p) {
-		gfx_unlock();
+		//gfx_unlock();
 	} else {
 		mon->rtg_locked = true;
 	}
@@ -1490,8 +1450,8 @@ uae_u8* gfx_lock_picasso(const int monid, bool fullupdate)
 void gfx_unlock_picasso(const int monid, const bool dorender)
 {
 	struct AmigaMonitor* mon = &AMonitors[monid];
-	if (!mon->rtg_locked)
-		gfx_lock();
+	//if (!mon->rtg_locked)
+	//	gfx_lock();
 	mon->rtg_locked = false;
 	if (dorender) {
 		if (mon->p96_double_buffer_needs_flushing) {
@@ -1502,14 +1462,14 @@ void gfx_unlock_picasso(const int monid, const bool dorender)
 	//SDL_UnlockTexture(amiga_texture);
 	if (dorender) {
 		if (SDL2_renderframe(monid, true, false)) {
-			gfx_unlock();
+			//gfx_unlock();
 			mon->render_ok = true;
 			show_screen_maybe(monid, true);
 		} else {
-			gfx_unlock();
+			//gfx_unlock();
 		}
 	} else {
-		gfx_unlock();
+		//gfx_unlock();
 	}
 }
 
@@ -1641,7 +1601,7 @@ static void update_gfxparams(struct AmigaMonitor* mon)
 #else
 	mon->currentmode.current_depth = currprefs.color_mode < 5 && currprefs.gfx_api == 1 ? 16 : 32;
 #endif
-	if (mon->screen_is_picasso && canmatchdepth() && isfullscreen() > 0) {
+	if (mon->screen_is_picasso) {
 		int pbits = state->BytesPerPixel * 8;
 		if (pbits <= 8) {
 			if (mon->currentmode.current_depth == 32)
@@ -1649,8 +1609,8 @@ static void update_gfxparams(struct AmigaMonitor* mon)
 			else
 				pbits = 16;
 		}
-		if (pbits == 24)
-			pbits = 32;
+		//if (pbits == 24)
+		//	pbits = 32;
 		mon->currentmode.current_depth = pbits;
 	}
 	mon->currentmode.amiga_width = mon->currentmode.current_width;
@@ -2911,14 +2871,14 @@ int graphics_init(bool mousecapture)
 
 int graphics_setup()
 {
-	if (!screen_cs_allocated) {
-		screen_cs = SDL_CreateMutex();
-		if (screen_cs == nullptr) {
-			write_log(_T("Couldn't create screen_cs: %s\n"), SDL_GetError());
-			return 0;
-		}
-		screen_cs_allocated = true;
-	}
+	//if (!screen_cs_allocated) {
+	//	screen_cs = SDL_CreateMutex();
+	//	if (screen_cs == nullptr) {
+	//		write_log(_T("Couldn't create screen_cs: %s\n"), SDL_GetError());
+	//		return 0;
+	//	}
+	//	screen_cs_allocated = true;
+	//}
 #ifdef PICASSO96
 	InitPicasso96(0);
 #endif
@@ -2932,9 +2892,9 @@ void graphics_leave()
 		close_windows(&AMonitors[i]);
 	}
 
-	SDL_DestroyMutex(screen_cs);
-	screen_cs = nullptr;
-	screen_cs_allocated = false;
+	//SDL_DestroyMutex(screen_cs);
+	//screen_cs = nullptr;
+	//screen_cs_allocated = false;
 }
 
 void close_windows(struct AmigaMonitor* mon)
@@ -3385,6 +3345,12 @@ static bool doInit(AmigaMonitor* mon)
 		if (mon->screen_is_picasso) {
 			display_width = picasso96_state[0].Width ? picasso96_state[0].Width : 640;
 			display_height = picasso96_state[0].Height ? picasso96_state[0].Height : 480;
+			if (picasso96_state[0].RGBFormat == RGBFB_R5G5B5)
+				pixel_format = SDL_PIXELFORMAT_BGR24;
+			else if (picasso96_state[0].RGBFormat == RGBFB_R5G6B5PC)
+				pixel_format = SDL_PIXELFORMAT_RGB565;
+			else
+				pixel_format = SDL_PIXELFORMAT_BGR888;
 			break;
 		} else {
 #endif
@@ -3417,6 +3383,7 @@ static bool doInit(AmigaMonitor* mon)
 
 			display_width = mon->currentmode.amiga_width;
 			display_height = mon->currentmode.amiga_height;
+			pixel_format = SDL_PIXELFORMAT_BGR888;
 			break;
 #ifdef PICASSO96
 		}
@@ -3498,7 +3465,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 	const struct picasso96_state_struct* state = &picasso96_state[monid];
 	struct vidbuffer *vb = NULL, *vbout = NULL;
 
-	gfx_lock();
+	//gfx_lock();
 
 	int w, h;
 
@@ -3509,7 +3476,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 		vb = avidinfo->inbuffer;
 		vbout = avidinfo->outbuffer;
 		if (!vb) {
-			gfx_unlock();
+			//gfx_unlock();
 			return false;
 		}
 		w = vb->outwidth;
@@ -3524,7 +3491,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 				vbout->width_allocated = w;
 				vbout->height_allocated = h;
 			}
-			gfx_unlock();
+			//gfx_unlock();
 			return false;
 		}
 	}
@@ -3533,12 +3500,12 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 		oldtex_w[monid] = w;
 		oldtex_h[monid] = h;
 		oldtex_rtg[monid] = mon->screen_is_picasso;
-		gfx_unlock();
+		//gfx_unlock();
 		return false;
 	}
 
 	if (!SDL2_alloctexture(mon->monitor_id, w, h)) {
-		gfx_unlock();
+		//gfx_unlock();
 		return false;
 	}
 
@@ -3670,7 +3637,7 @@ bool target_graphics_buffer_update(const int monid, const bool force)
 #endif
 	}
 
-	gfx_unlock();
+	//gfx_unlock();
 
 	return true;
 }
