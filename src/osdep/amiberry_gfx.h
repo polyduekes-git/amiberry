@@ -33,14 +33,12 @@ struct ScreenResolution
 
 struct PicassoResolution
 {
+	bool inuse;
 	struct ScreenResolution res;
-	int depth;   /* depth in bytes-per-pixel */
 	int residx;
 	int refresh[MAX_REFRESH_RATES]; /* refresh-rates in Hz */
 	int refreshtype[MAX_REFRESH_RATES]; /* 0=normal,1=raw,2=lace */
 	TCHAR name[25];
-	/* Bit mask of RGBFF_xxx values.  */
-	uae_u32 colormodes;
 	int rawmode;
 	bool lace; // all modes lace
 };
@@ -60,8 +58,8 @@ extern struct MultiDisplay Displays[MAX_DISPLAYS];
 
 struct winuae_currentmode {
 	unsigned int flags;
-	int native_width, native_height, native_depth, pitch;
-	int current_width, current_height, current_depth;
+	int native_width, native_height;
+	int current_width, current_height;
 	int amiga_width, amiga_height;
 	int initdone;
 	int fullfill;
@@ -133,7 +131,7 @@ extern void reenumeratemonitors();
 extern bool MonitorFromPoint(SDL_Point pt);
 void gfx_DisplayChangeRequested(int);
 void DX_Invalidate(AmigaMonitor*, int x, int y, int width, int height);
-int gfx_adjust_screenmode(const MultiDisplay* md, int* pwidth, int* pheight, int* ppixbits);
+int gfx_adjust_screenmode(const MultiDisplay* md, int* pwidth, int* pheight);
 
 extern int default_freq;
 

@@ -2286,8 +2286,6 @@ void target_fixup_options(uae_prefs* p)
 	if (p->rtgboards[0].rtgmem_type >= GFXBOARD_HARDWARE) {
 		p->rtg_hardwareinterrupt = false;
 		p->rtg_hardwaresprite = false;
-		p->rtgmatchdepth = false;
-		p->color_mode = 5;
 	}
 
 #ifdef AMIBERRY
@@ -2301,7 +2299,7 @@ void target_fixup_options(uae_prefs* p)
 	for (auto & j : p->gfx_monitor) {
 		if (j.gfx_size_fs.special == WH_NATIVE) {
 			int i;
-			for (i = 0; md->DisplayModes[i].depth >= 0; i++) {
+			for (i = 0; md->DisplayModes[i].inuse; i++) {
 				if (md->DisplayModes[i].res.width == md->rect.w - md->rect.x &&
 					md->DisplayModes[i].res.height == md->rect.h - md->rect.y) {
 					j.gfx_size_fs.width = md->DisplayModes[i].res.width;
@@ -2310,25 +2308,12 @@ void target_fixup_options(uae_prefs* p)
 					break;
 				}
 			}
-			if (md->DisplayModes[i].depth < 0) {
+			if (!md->DisplayModes[i].inuse) {
 				j.gfx_size_fs.special = 0;
 				write_log(_T("Native resolution not found.\n"));
 			}
 		}
 	}
-	/* switch from 32 to 16 or vice versa if mode does not exist */
-	//if (1 || isfullscreen() > 0) {
-		int depth = p->color_mode == 5 ? 4 : 2;
-		for (int i = 0; md->DisplayModes[i].depth >= 0; i++) {
-			if (md->DisplayModes[i].depth == depth) {
-				depth = 0;
-				break;
-			}
-		}
-		if (depth) {
-			p->color_mode = p->color_mode == 5 ? 2 : 5;
-		}
-	//}
 
 	if ((p->gfx_apmode[0].gfx_vsyncmode || p->gfx_apmode[1].gfx_vsyncmode)) {
 		if (p->produce_sound && sound_devices[p->soundcard]->type == SOUND_DEVICE_SDL2) {
@@ -2386,7 +2371,6 @@ void target_default_options(uae_prefs* p, const int type)
 		p->blankmonitors = false;
 		//p->powersavedisabled = true;
 		p->sana2 = false;
-		p->rtgmatchdepth = true;
 		p->gf[GF_RTG].gfx_filter_autoscale = RTG_MODE_SCALE;
 		p->rtgallowscaling = false;
 		p->rtgscaleaspectratio = -1;
@@ -2400,7 +2384,6 @@ void target_default_options(uae_prefs* p, const int type)
 		//p->commandpathend[0] = 0;
 		//p->statusbar = 1;
 		p->gfx_api = 4;
-		p->color_mode = 5;
 		if (p->gf[GF_NORMAL].gfx_filter == 0)
 			p->gf[GF_NORMAL].gfx_filter = 1;
 		if (p->gf[GF_RTG].gfx_filter == 0)
@@ -2630,7 +2613,6 @@ void target_save_options(zfile* f, uae_prefs* p)
 
 	cfgfile_target_dwrite_bool (f, _T("midirouter"), p->midirouter);
 
-	cfgfile_target_dwrite_bool(f, _T("rtg_match_depth"), p->rtgmatchdepth);
 	cfgfile_target_dwrite_bool(f, _T("rtg_scale_allow"), p->rtgallowscaling);
 	cfgfile_target_dwrite(f, _T("rtg_scale_aspect_ratio"), _T("%d:%d"),
 		p->rtgscaleaspectratio >= 0 ? (p->rtgscaleaspectratio / ASPECTMULT) : -1,
@@ -2846,7 +2828,7 @@ static int target_parse_option_host(uae_prefs *p, const TCHAR *option, const TCH
 		return 1;
 	}
 	
-	if (cfgfile_yesno(option, value, _T("rtg_match_depth"), &p->rtgmatchdepth))
+	if (cfgfile_yesno(option, value, _T("rtg_match_depth"), &tbool))
 		return 1;
 	if (cfgfile_yesno(option, value, _T("rtg_scale_allow"), &p->rtgallowscaling))
 		return 1;
