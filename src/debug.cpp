@@ -1539,7 +1539,7 @@ static void set_debug_colors(void)
 
 static int cycles_toggle;
 
-static void debug_draw_cycles(uae_u8 *buf, uae_u16 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
+static void debug_draw_cycles(uae_u8 *buf, uae_u8 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
 {
 	int y, x, xx, dx, xplus, yplus;
 	struct dma_rec *dr;
@@ -1634,7 +1634,7 @@ struct memory_heatmap
 	uae_u16 type, extra;
 };
 
-static void debug_draw_heatmap(uae_u8 *buf, uae_u16 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
+static void debug_draw_heatmap(uae_u8 *buf, uae_u8 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
 {
 	struct memory_heatmap *mht = heatmap;
 	int dx = 16;
@@ -1656,7 +1656,7 @@ static void debug_draw_heatmap(uae_u8 *buf, uae_u16 *genlock, int line, int widt
 	}
 }
 
-void debug_draw(uae_u8 *buf, uae_u16 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
+void debug_draw(uae_u8 *buf, uae_u8 *genlock, int line, int width, int height, uae_u32 *xredcolors, uae_u32 *xgreencolors, uae_u32 *xbluescolors)
 {
 	if (!heatmap_debug_colors) {
 		heatmap_debug_colors = xcalloc(uae_u32, DMARECORD_MAX * HEATMAP_COUNT);

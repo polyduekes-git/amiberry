@@ -39,6 +39,7 @@ static void lts_aga_n_ilores_dlores_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -85,6 +86,7 @@ static void lts_aga_dpf_ilores_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -137,6 +139,7 @@ static void lts_aga_ehb_ilores_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -188,6 +191,7 @@ static void lts_aga_ham_ilores_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -233,6 +237,7 @@ static void lts_aga_kehb_ilores_dlores_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -279,6 +284,7 @@ static void lts_aga_n_ihires_dlores_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -325,6 +331,7 @@ static void lts_aga_dpf_ihires_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -377,6 +384,7 @@ static void lts_aga_ehb_ihires_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -428,6 +436,7 @@ static void lts_aga_ham_ihires_dlores_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -473,6 +482,7 @@ static void lts_aga_kehb_ihires_dlores_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -486,243 +496,23 @@ static void lts_aga_kehb_ihires_dlores_b1(int draw_start, int draw_end, int draw
 }
 static void lts_aga_n_ishres_dlores_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-				} else {
-					*buf1++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			col = colors_aga[c];
-			*buf1++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_dpf_ishres_dlores_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-				} else {
-					*buf1++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			{
-				uae_u8 dpval = dpf_lookup[c];
-				if (dpf_lookup_no[c]) {
-					dpval += dblpfofs[bpldualpf2of];
-				}
-				dpval ^= bxor;
-				col = colors_aga[dpval];
-			}
-			*buf1++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_ehb_ishres_dlores_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-				} else {
-					*buf1++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			if (c & 0x20) {
-				uae_u32 v = (colors_aga[c & 31] >> 1) & 0x7f7f7f;
-				col = CONVERT_RGB(v);
-			} else {
-				col = colors_aga[c];
-			}
-			*buf1++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_ham_ishres_dlores_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-				} else {
-					*buf1++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
-			*buf1++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_kehb_ishres_dlores_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-				} else {
-					*buf1++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			col = colors_aga[c & 31];
-			*buf1++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_n_ilores_dhires_b1(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -760,11 +550,13 @@ static void lts_aga_n_ilores_dhires_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -812,6 +604,7 @@ static void lts_aga_dpf_ilores_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -823,6 +616,7 @@ static void lts_aga_dpf_ilores_dhires_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -876,6 +670,7 @@ static void lts_aga_ehb_ilores_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -886,6 +681,7 @@ static void lts_aga_ehb_ilores_dhires_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -938,10 +734,12 @@ static void lts_aga_ham_ilores_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -988,11 +786,13 @@ static void lts_aga_kehb_ilores_dhires_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -1039,6 +839,7 @@ static void lts_aga_n_ihires_dhires_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -1085,6 +886,7 @@ static void lts_aga_dpf_ihires_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1137,6 +939,7 @@ static void lts_aga_ehb_ihires_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1188,6 +991,7 @@ static void lts_aga_ham_ihires_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -1233,6 +1037,7 @@ static void lts_aga_kehb_ihires_dhires_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -1279,6 +1084,7 @@ static void lts_aga_n_ishres_dhires_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -1325,6 +1131,7 @@ static void lts_aga_dpf_ishres_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1377,6 +1184,7 @@ static void lts_aga_ehb_ishres_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1428,6 +1236,7 @@ static void lts_aga_ham_ishres_dhires_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -1473,6 +1282,7 @@ static void lts_aga_kehb_ishres_dhires_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -1522,21 +1332,25 @@ static void lts_aga_n_ilores_dshres_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -1586,6 +1400,7 @@ static void lts_aga_dpf_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1597,6 +1412,7 @@ static void lts_aga_dpf_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1608,6 +1424,7 @@ static void lts_aga_dpf_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1619,6 +1436,7 @@ static void lts_aga_dpf_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1674,6 +1492,7 @@ static void lts_aga_ehb_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1684,6 +1503,7 @@ static void lts_aga_ehb_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1694,6 +1514,7 @@ static void lts_aga_ehb_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1704,6 +1525,7 @@ static void lts_aga_ehb_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -1758,18 +1580,22 @@ static void lts_aga_ham_ilores_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -1818,21 +1644,25 @@ static void lts_aga_kehb_ilores_dshres_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -1880,11 +1710,13 @@ static void lts_aga_n_ihires_dshres_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -1932,6 +1764,7 @@ static void lts_aga_dpf_ihires_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1943,6 +1776,7 @@ static void lts_aga_dpf_ihires_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -1996,6 +1830,7 @@ static void lts_aga_ehb_ihires_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -2006,6 +1841,7 @@ static void lts_aga_ehb_ihires_dshres_b1(int draw_start, int draw_end, int draw_
 			}
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -2058,10 +1894,12 @@ static void lts_aga_ham_ihires_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -2108,11 +1946,13 @@ static void lts_aga_kehb_ihires_dshres_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -2159,6 +1999,7 @@ static void lts_aga_n_ishres_dshres_b1(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -2205,6 +2046,7 @@ static void lts_aga_dpf_ishres_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -2257,6 +2099,7 @@ static void lts_aga_ehb_ishres_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -2308,6 +2151,7 @@ static void lts_aga_ham_ishres_dshres_b1(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -2353,6 +2197,7 @@ static void lts_aga_kehb_ishres_dshres_b1(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -2401,6 +2246,7 @@ static void lts_aga_n_ilores_dlores_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -2450,6 +2296,7 @@ static void lts_aga_dpf_ilores_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -2505,6 +2352,7 @@ static void lts_aga_ehb_ilores_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -2559,6 +2407,7 @@ static void lts_aga_ham_ilores_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -2607,6 +2456,7 @@ static void lts_aga_kehb_ilores_dlores_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -2656,6 +2506,7 @@ static void lts_aga_n_ihires_dlores_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -2705,6 +2556,7 @@ static void lts_aga_dpf_ihires_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -2760,6 +2612,7 @@ static void lts_aga_ehb_ihires_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -2814,6 +2667,7 @@ static void lts_aga_ham_ihires_dlores_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -2862,6 +2716,7 @@ static void lts_aga_kehb_ihires_dlores_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -2876,258 +2731,23 @@ static void lts_aga_kehb_ihires_dlores_b2(int draw_start, int draw_end, int draw
 }
 static void lts_aga_n_ishres_dlores_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-					buf2++;
-				} else {
-					*buf1++ = bgcolor;
-					*buf2++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			col = colors_aga[c];
-			*buf1++ = col;
-			*buf2++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_dpf_ishres_dlores_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-					buf2++;
-				} else {
-					*buf1++ = bgcolor;
-					*buf2++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			{
-				uae_u8 dpval = dpf_lookup[c];
-				if (dpf_lookup_no[c]) {
-					dpval += dblpfofs[bpldualpf2of];
-				}
-				dpval ^= bxor;
-				col = colors_aga[dpval];
-			}
-			*buf1++ = col;
-			*buf2++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_ehb_ishres_dlores_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-					buf2++;
-				} else {
-					*buf1++ = bgcolor;
-					*buf2++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			if (c & 0x20) {
-				uae_u32 v = (colors_aga[c & 31] >> 1) & 0x7f7f7f;
-				col = CONVERT_RGB(v);
-			} else {
-				col = colors_aga[c];
-			}
-			*buf1++ = col;
-			*buf2++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_ham_ishres_dlores_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-					buf2++;
-				} else {
-					*buf1++ = bgcolor;
-					*buf2++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
-			*buf1++ = col;
-			*buf2++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_kehb_ishres_dlores_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
-	uae_u32 *colors_aga = (uae_u32*)ls->linecolorstate;
-	uae_u8 bxor = ls->bplcon4 >> 8;
-	int bufaddv = 1 << bufadd;
-	int cpaddv = 1 << cpadd;
-	int end = draw_end;
-	if (end > hbstrt_offset) {
-		end = hbstrt_offset;
-	}
-	int cnt = draw_end;
-	if (cnt > draw_startoffset) {
-		cnt = draw_startoffset;
-	}
-	if (cnt > hbstop_offset) {
-		cnt = hbstop_offset;
-	}
-	if (cnt > bpl1dat_trigger_offset) {
-		cnt = bpl1dat_trigger_offset;
-	}
-	while (cnt < end) {
-		bool bpl = false;
-		if (cnt < bpl1dat_trigger_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
-			if (cnt >= draw_startoffset) {
-				if (cnt < hbstop_offset) {
-					buf1++;
-					buf2++;
-				} else {
-					*buf1++ = bgcolor;
-					*buf2++ = bgcolor;
-				}
-			}
-		} else {
-			bpl = true;
-			uae_u8 c;
-			uae_u32 col;
-			c = *cp;
-			cp += cpadds[0];
-			c ^= bxor;
-			col = colors_aga[c & 31];
-			*buf1++ = col;
-			*buf2++ = col;
-		}
-		if (cnt >= bpl1dat_trigger_offset && !bpl) {
-			cp += cpaddv;
-		}
-		cnt += bufaddv;
-	}
+	lts_null();
 }
 static void lts_aga_n_ilores_dhires_b2(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3168,12 +2788,14 @@ static void lts_aga_n_ilores_dhires_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -3225,6 +2847,7 @@ static void lts_aga_dpf_ilores_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -3237,6 +2860,7 @@ static void lts_aga_dpf_ilores_dhires_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -3294,6 +2918,7 @@ static void lts_aga_ehb_ilores_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -3305,6 +2930,7 @@ static void lts_aga_ehb_ilores_dhires_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -3361,11 +2987,13 @@ static void lts_aga_ham_ilores_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -3416,12 +3044,14 @@ static void lts_aga_kehb_ilores_dhires_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -3471,6 +3101,7 @@ static void lts_aga_n_ihires_dhires_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -3520,6 +3151,7 @@ static void lts_aga_dpf_ihires_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -3575,6 +3207,7 @@ static void lts_aga_ehb_ihires_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -3629,6 +3262,7 @@ static void lts_aga_ham_ihires_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -3677,6 +3311,7 @@ static void lts_aga_kehb_ihires_dhires_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -3726,6 +3361,7 @@ static void lts_aga_n_ishres_dhires_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -3775,6 +3411,7 @@ static void lts_aga_dpf_ishres_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -3830,6 +3467,7 @@ static void lts_aga_ehb_ishres_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -3884,6 +3522,7 @@ static void lts_aga_ham_ishres_dhires_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -3932,6 +3571,7 @@ static void lts_aga_kehb_ishres_dhires_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -3987,24 +3627,28 @@ static void lts_aga_n_ilores_dshres_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -4060,6 +3704,7 @@ static void lts_aga_dpf_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4072,6 +3717,7 @@ static void lts_aga_dpf_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4084,6 +3730,7 @@ static void lts_aga_dpf_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4096,6 +3743,7 @@ static void lts_aga_dpf_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4157,6 +3805,7 @@ static void lts_aga_ehb_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4168,6 +3817,7 @@ static void lts_aga_ehb_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4179,6 +3829,7 @@ static void lts_aga_ehb_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4190,6 +3841,7 @@ static void lts_aga_ehb_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4250,21 +3902,25 @@ static void lts_aga_ham_ilores_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -4319,24 +3975,28 @@ static void lts_aga_kehb_ilores_dshres_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[2];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[3];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -4388,12 +4048,14 @@ static void lts_aga_n_ihires_dshres_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -4445,6 +4107,7 @@ static void lts_aga_dpf_ihires_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4457,6 +4120,7 @@ static void lts_aga_dpf_ihires_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4514,6 +4178,7 @@ static void lts_aga_ehb_ihires_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4525,6 +4190,7 @@ static void lts_aga_ehb_ihires_dshres_b2(int draw_start, int draw_end, int draw_
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4581,11 +4247,13 @@ static void lts_aga_ham_ihires_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -4636,12 +4304,14 @@ static void lts_aga_kehb_ihires_dshres_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];
 			*buf1++ = col;
 			*buf2++ = col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[1];
 			c ^= bxor;
 			col = colors_aga[c & 31];
@@ -4691,6 +4361,7 @@ static void lts_aga_n_ishres_dshres_b2(int draw_start, int draw_end, int draw_st
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c];
@@ -4740,6 +4411,7 @@ static void lts_aga_dpf_ishres_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			{
 				uae_u8 dpval = dpf_lookup[c];
@@ -4795,6 +4467,7 @@ static void lts_aga_ehb_ishres_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			if (c & 0x20) {
@@ -4849,6 +4522,7 @@ static void lts_aga_ham_ishres_dshres_b2(int draw_start, int draw_end, int draw_
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			col = decode_ham_pixel_aga_fast(c, planes, bxor, colors_aga);
 			*buf1++ = col;
@@ -4897,6 +4571,7 @@ static void lts_aga_kehb_ishres_dshres_b2(int draw_start, int draw_end, int draw
 			uae_u8 c;
 			uae_u32 col;
 			c = *cp;
+			clxdat |= bplcoltable[c];
 			cp += cpadds[0];
 			c ^= bxor;
 			col = colors_aga[c & 31];

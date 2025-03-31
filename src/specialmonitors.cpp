@@ -17,7 +17,7 @@
 #endif
 #include "arcadia.h"
 
-// We have this in sysconfig.h in Amiberry
+// We have this in sysconfig.h
 //#define VIDEOGRAB 1
 
 const TCHAR *specialmonitorfriendlynames[] =
@@ -76,7 +76,7 @@ static bool automatic;
 static int monitor;
 
 extern uae_u16 bplcon0;
-extern uae_u16 **row_map_genlock;
+extern uae_u8 **row_map_genlock;
 static int spm_left_border;
 
 static uae_u8 graffiti_palette[256 * 4];
@@ -204,21 +204,21 @@ STATIC_INLINE void PRGBA(struct vidbuffer *dst, uae_u8 *dataline, uae_u8 r, uae_
 STATIC_INLINE void PUT_PRGB(uae_u8 *d, uae_u8 *d2, struct vidbuffer *dst, uae_u8 r, uae_u8 g, uae_u8 b, int xadd, int doublelines, bool hdouble)
 {
 	if (hdouble)
-		PRGB(dst, d - dst->pixbytes, r, g, b);
+		PRGB(dst, d - 4, r, g, b);
 	PRGB(dst, d, r, g, b);
 	if (xadd >= 2) {
-		PRGB(dst, d + 1 * dst->pixbytes, r, g, b);
+		PRGB(dst, d + 1 * 4, r, g, b);
 		if (hdouble)
-			PRGB(dst, d + 2 * dst->pixbytes, r, g, b);
+			PRGB(dst, d + 2 * 4, r, g, b);
 	}
 	if (doublelines) {
 		if (hdouble)
-			PRGB(dst, d2 - dst->pixbytes, r, g, b);
+			PRGB(dst, d2 - 4, r, g, b);
 		PRGB(dst, d2, r, g, b);
 		if (xadd >= 2) {
-			PRGB(dst, d2 + 1 * dst->pixbytes, r, g, b);
+			PRGB(dst, d2 + 1 * 4, r, g, b);
 			if (hdouble)
-				PRGB(dst, d2 + 2 * dst->pixbytes, r, g, b);
+				PRGB(dst, d2 + 2 * 4, r, g, b);
 		}
 	}
 }
@@ -226,21 +226,21 @@ STATIC_INLINE void PUT_PRGB(uae_u8 *d, uae_u8 *d2, struct vidbuffer *dst, uae_u8
 STATIC_INLINE void PUT_PRGBA(uae_u8 *d, uae_u8 *d2, struct vidbuffer *dst, uae_u8 r, uae_u8 g, uae_u8 b, uae_u8 a, int xadd, int doublelines, bool hdouble)
 {
 	if (hdouble)
-		PRGBA(dst, d - dst->pixbytes, r, g, b, a);
+		PRGBA(dst, d - 4, r, g, b, a);
 	PRGBA(dst, d, r, g, b, a);
 	if (xadd >= 2) {
-		PRGBA(dst, d + 1 * dst->pixbytes, r, g, b, a);
+		PRGBA(dst, d + 1 * 4, r, g, b, a);
 		if (hdouble)
-			PRGBA(dst, d + 2 * dst->pixbytes, r, g, b, a);
+			PRGBA(dst, d + 2 * 4, r, g, b, a);
 	}
 	if (doublelines) {
 		if (hdouble)
-			PRGBA(dst, d2 - dst->pixbytes, r, g, b, a);
+			PRGBA(dst, d2 - 4, r, g, b, a);
 		PRGBA(dst, d2, r, g, b, a);
 		if (xadd >= 2) {
-			PRGBA(dst, d2 + 1 * dst->pixbytes, r, g, b, a);
+			PRGBA(dst, d2 + 1 * 4, r, g, b, a);
 			if (hdouble)
-				PRGBA(dst, d2 + 2 * dst->pixbytes, r, g, b, a);
+				PRGBA(dst, d2 + 2 * 4, r, g, b, a);
 		}
 	}
 }
@@ -814,14 +814,14 @@ static bool firecracker24(struct vidbuffer *src, struct vidbuffer *dst, bool dou
 		if (yoff >= src->inheight)
 			continue;
 		uae_u8 *line = src->bufmem + yoff * src->rowbytes;
-		uae_u16 *line_genlock = row_map_genlock[yoff];
+		uae_u8 *line_genlock = row_map_genlock[yoff];
 		uae_u8 *dstline = dst->bufmem + (((y * 2 + oddlines) - dst->yoffset) / vdbl) * dst->rowbytes;
 		uae_u8 *vramline = sm_frame_buffer + (fc24_y + oddlines) * SM_VRAM_WIDTH * SM_VRAM_BYTES + bufferoffset;
 		fc24_x = 0;
 		for (x = 0; x < src->inwidth; x++) {
 			uae_u8 r = 0, g = 0, b = 0;
 			uae_u8 *s = line + ((x << 1) / hdbl) * src->pixbytes;
-			uae_u16 *s_genlock = line_genlock + ((x << 1) / hdbl);
+			uae_u8 *s_genlock = line_genlock + ((x << 1) / hdbl);
 			uae_u8 *d = dstline + ((x << 1) / hdbl) * dst->pixbytes;
 			int fc24_xx = (fc24_x >> fc24_dx) - fc24_xoffset;
 			uae_u8 *vramptr = NULL;
@@ -1685,7 +1685,7 @@ static bool ham_e(struct vidbuffer *src, struct vidbuffer *dst, bool doublelines
 		if (yoff >= src->inheight)
 			continue;
 		uae_u8 *line = src->bufmem + yoff * src->rowbytes;
-		uae_u16 *line_genlock = row_map_genlock[yoff];
+		uae_u8 *line_genlock = row_map_genlock[yoff];
 		uae_u8 *dstline = dst->bufmem + (((y * 2 + oddlines) - dst->yoffset) / vdbl) * dst->rowbytes;
 
 		bool getpalette = false;
@@ -1694,7 +1694,7 @@ static bool ham_e(struct vidbuffer *src, struct vidbuffer *dst, bool doublelines
 		int oddeven = 0;
 		for (x = 0; x < src->inwidth; x++) {
 			uae_u8 *s = line + ((x << 1) / hdbl) * src->pixbytes;
-			uae_u16 *s_genlock = line_genlock + ((x << 1) / hdbl);
+			uae_u8 *s_genlock = line_genlock + ((x << 1) / hdbl);
 			uae_u8 *d = dstline + ((x << 1) / hdbl) * dst->pixbytes;
 			uae_u8 *s2 = s + src->rowbytes;
 			uae_u8 *d2 = d + dst->rowbytes;
@@ -2598,7 +2598,7 @@ skip:
 		bool ztoggle = false;
 		uae_u8 *line = src->bufmem + yoff * src->rowbytes;
 		uae_u8 *dstline = dst->bufmem + (((y * 2 + oddlines) - dst->yoffset) >> vdbl) * dst->rowbytes;
-		uae_u16 *line_genlock = row_map_genlock[yoff];
+		uae_u8 *line_genlock = row_map_genlock[yoff];
 		int gy = (((y * 2 + oddlines) - src->yoffset + offsety - gen_yoffset) >> vdbl) * deltay / 65536;
 		if (genlock_image_upsidedown)
 			gy = (genlock_image_height - 1) - gy;
@@ -2608,7 +2608,7 @@ skip:
 		noise_add = (quickrand() & 15) | 1;
 		uae_u8 *s = line;
 		uae_u8 *d = dstline;
-		uae_u16 *s_genlock = line_genlock;
+		uae_u8 *s_genlock = line_genlock;
 		if (first) {
 			firstdstline = dstline;
 			first = false;
@@ -2883,7 +2883,7 @@ struct opals {
 static struct opals *opal;
 
 
-static void opal_pixel(struct opals *opal, uae_u8 *d, uae_u8 *d2, uae_u8 *s, uae_u8 *s2, uae_u16 *s_genlock, struct vidbuffer *src, struct vidbuffer *dst, uae_u8 r, uae_u8 g, uae_u8 b, uae_u8 pr, bool doublelines, bool hires, bool nextpix)
+static void opal_pixel(struct opals *opal, uae_u8 *d, uae_u8 *d2, uae_u8 *s, uae_u8 *s2, uae_u8 *s_genlock, struct vidbuffer *src, struct vidbuffer *dst, uae_u8 r, uae_u8 g, uae_u8 b, uae_u8 pr, bool doublelines, bool hires, bool nextpix)
 {
 	bool oa;
 	switch (opal->priority_stencil_mode | pr)
@@ -3008,7 +3008,7 @@ static bool opalvision(struct vidbuffer *src, struct vidbuffer *dst, bool double
 	for (; y < yend; y++) {
 
 		uae_u8 *line = NULL;
-		uae_u16 *line_genlock = NULL;
+		uae_u8 *line_genlock = NULL;
 		uae_u8 *dstline = NULL;
 		int ydisp = -1;
 
@@ -3098,7 +3098,7 @@ static bool opalvision(struct vidbuffer *src, struct vidbuffer *dst, bool double
 
 			uae_u8 *s = line + ((ax << 1) >> hdbl_shift) * src->pixbytes;
 			uae_u8 *s2 = s + src->rowbytes;
-			uae_u16 *s_genlock = line_genlock ? line_genlock + ((ax << 1) >> hdbl_shift) : NULL;
+			uae_u8 *s_genlock = line_genlock ? line_genlock + ((ax << 1) >> hdbl_shift) : NULL;
 
 			if (!oddeven) {
 
