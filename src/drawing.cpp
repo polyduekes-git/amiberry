@@ -82,7 +82,7 @@ struct denise_rga_queue
 	int dtotal;
 	int calib_start;
 	int calib_len;
-	bool lol;
+	bool lol, lof;
 	uae_u16 strobe;
 	int strobe_pos;
 	struct linestate *ls;
@@ -2578,12 +2578,7 @@ static void sprwrite(int reg, uae_u32 v)
 			}
 		}
 		s->xpos = sprxp;
-
-		if (aga_mode) {
-			dspr[num & ~1].attached = ((dspr[num & ~1].ctl | dspr[num | 1].ctl) & 0x80) != 0;
-		} else {
-			dspr[num & ~1].attached = (dspr[num | 1].ctl & 0x80) != 0;
-		}
+		dspr[num & ~1].attached = (dspr[num | 1].ctl & 0x80) != 0;
 		if (s->armed) {
 			spr_nearest();
 		}
@@ -3631,12 +3626,14 @@ static void handle_strobes(struct denise_rga *rd)
 	if (rd->rga == 0x03c && previous_strobe != 0x03c) {
 		linear_denise_vbstrt = this_line->linear_vpos;
 		if (denise_vblank_extra) {
-			denise_vblank_extra_vbstrt = this_line->linear_vpos + denise_vblank_extra;
+			int lof = this_line->lof;
+			denise_vblank_extra_vbstrt = this_line->linear_vpos + denise_vblank_extra + lof;
 		}
 	} else if (rd->rga != 0x03c && previous_strobe == 0x03c) {
 		linear_denise_vbstop = this_line->linear_vpos;
 		if (denise_vblank_extra) {
-			denise_vblank_extra_vbstop = this_line->linear_vpos - denise_vblank_extra;
+			int lof = this_line->lof;
+			denise_vblank_extra_vbstop = this_line->linear_vpos - denise_vblank_extra + lof;
 		}
 		denise_visible_lines = 0;
 	}
@@ -5317,7 +5314,7 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 					if (h) {
 						denise_hcounter_next = denise_hcounter_new;
 					}
-					checkhorizontal1_aga(denise_hcounter << 2, denise_hcounter_next << 2, h);
+					checkhorizontal1_aga(denise_hcounter, denise_hcounter_next, h);
 					flush_null();
 #ifdef DEBUGGER
 					*debug_dma_dhpos_odd = denise_hcounter;
@@ -5348,8 +5345,16 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 			denise_cck++;
 		}
 
-		if (buf1 && gbuf && denise_pixtotal_max > 0) {
-			memset(gbuf, 0, ((2 * denise_pixtotal_max) << hresolution) * sizeof(uae_u16));
+		if (buf1 && denise_pixtotal_max > 0) {
+#if 0
+			memset(buf1, 0, ((2 * denise_pixtotal_max) << hresolution) * sizeof(uae_u32));
+			if (buf2 && buf1 != buf2) {
+				memset(buf2, 0, ((2 * denise_pixtotal_max) << hresolution) * sizeof(uae_u32));
+			}
+#endif
+			if (gbuf) {
+				memset(gbuf, 0, (2 * denise_pixtotal_max) << hresolution);
+			}
 		}
 
 	} else {
@@ -5461,7 +5466,7 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 							memset(p1, 0, ww * sizeof(uae_u32));
 							if (bufg) {
 								uae_u8 *gp1 = (p1 - ptrs) + bufg;
-								memset(gp1, 0, ww * sizeof(uae_u16));
+								memset(gp1, 0, ww);
 							}
 						}
 					} else {
@@ -5469,7 +5474,7 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 							memset(p1 - ww, 0, w * sizeof(uae_u32));
 							if (bufg) {
 								uae_u8 *gp1 = (p1 - ptrs) + bufg;
-								memset(gp1 - ww, 0, w * sizeof(uae_u16));
+								memset(gp1 - ww, 0, w);
 							}
 						}
 					}
@@ -6746,6 +6751,10 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 		return;
 	}
 
+	if ((this_line->linear_vpos >= denise_vblank_extra_vbstop || this_line->linear_vpos < denise_vblank_extra_vbstrt) && currprefs.gfx_overscanmode < OVERSCANMODE_ULTRA) {
+		return;
+	}
+
 	uae_u32 *buf1p = buf1;
 	uae_u32 *buf2p = buf2 != buf1 ? buf2 : NULL;
 	int planecnt = GET_PLANES(ls->bplcon0);
@@ -7117,6 +7126,7 @@ static void updatelinedata(void)
 {
 	this_line = &temp_line;
 	this_line->vpos = vpos;
+	this_line->lof = lof_store;
 	this_line->linear_vpos = linear_vpos;
 }
 
@@ -7245,7 +7255,7 @@ void denise_handle_quick_strobe_queue(uae_u16 strobe, int strobe_pos, int endpos
 	}
 }
 
-void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int startpos, int endpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lol, struct linestate *ls)
+void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int startpos, int endpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lof, bool lol, struct linestate *ls)
 {
 	if (MULTITHREADED_DENISE) {
 
@@ -7266,6 +7276,7 @@ void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int star
 		q->dtotal = dtotal;
 		q->calib_start = calib_start;
 		q->calib_len = calib_len;
+		q->lof = lof;
 		q->lol = lol;
 		q->ls = ls;
 		q->vpos = vpos;
