@@ -18,9 +18,9 @@
 #include "traps.h"
 #include "guisan/color.hpp"
 
-#define UAEMAJOR 7
+#define UAEMAJOR 8
 #define UAEMINOR 0
-#define UAESUBREV 6
+#define UAESUBREV 0
 
 #define MAX_AMIGADISPLAYS 1
 
