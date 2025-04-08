@@ -2111,7 +2111,7 @@ int check_prefs_changed_gfx()
 		currprefs.gf[0].gfx_filter_autoscale = changed_prefs.gf[0].gfx_filter_autoscale;
 		currprefs.gf[2].gfx_filter_autoscale = changed_prefs.gf[2].gfx_filter_autoscale;
 
-		get_custom_limits(nullptr, nullptr, nullptr, nullptr, nullptr);
+		get_custom_limits(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 		fixup_prefs_dimensions(&changed_prefs);
 
 		return 1;
@@ -3719,7 +3719,9 @@ void auto_crop_image()
 	{
 		static int last_cw = 0, last_ch = 0, last_cx = 0, last_cy = 0;
 		int cw, ch, cx, cy, crealh = 0;
-		get_custom_limits(&cw, &ch, &cx, &cy, &crealh);
+		int hres = currprefs.gfx_resolution;
+		int vres = currprefs.gfx_vresolution;
+		get_custom_limits(&cw, &ch, &cx, &cy, &crealh, &hres, &vres);
 
 		if (!force_auto_crop && last_autocrop == currprefs.gfx_auto_crop && last_cw == cw && last_ch == ch && last_cx == cx && last_cy == cy)
 		{

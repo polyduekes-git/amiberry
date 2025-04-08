@@ -1092,17 +1092,19 @@ static void serdatcopy()
 		}
 
 		event2_newevent_x_replace(per, 0, sersend_ce);
+
+		checksend();
 	}
 	else {
 
 		if (serloop_enabled) {
 			sersend_serloop(0);
 		} else {
+			checksend();
 			sersend_end(0);
 		}
 	}
 
-	checksend();
 }
 
 void serial_hsynchandler ()
