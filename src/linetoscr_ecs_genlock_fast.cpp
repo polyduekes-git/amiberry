@@ -42,8 +42,8 @@ static void lts_ecs_n_ilores_dlores_b1_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -53,6 +53,10 @@ static void lts_ecs_n_ilores_dlores_b1_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -92,11 +96,11 @@ static void lts_ecs_dpf_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -106,6 +110,10 @@ static void lts_ecs_dpf_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -145,13 +153,13 @@ static void lts_ecs_ehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -161,6 +169,10 @@ static void lts_ecs_ehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -200,8 +212,8 @@ static void lts_ecs_ham_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -211,6 +223,10 @@ static void lts_ecs_ham_ilores_dlores_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -250,8 +266,8 @@ static void lts_ecs_kehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -261,6 +277,10 @@ static void lts_ecs_kehb_ilores_dlores_b1_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -300,8 +320,65 @@ static void lts_ecs_n_ihires_dlores_b1_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_n_ihires_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = xcolors[colors_ocs[c]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = xcolors[colors_ocs[c]];
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -350,11 +427,74 @@ static void lts_ecs_dpf_ihires_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_dpf_ihires_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			{
+				uae_u8 dpval = dpf_lookup[c];
+				col = xcolors[colors_ocs[dpval]];
+			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			{
+				uae_u8 dpval = dpf_lookup[c];
+				colf = xcolors[colors_ocs[dpval]];
+			}
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -403,13 +543,80 @@ static void lts_ecs_ehb_ihires_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ehb_ihires_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			c &= bplehb_mask;
+			if (c <= 31) {
+				col = xcolors[colors_ocs[c]];
+			} else {
+				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
+			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			c &= bplehb_mask;
+			if (c <= 31) {
+				colf = xcolors[colors_ocs[c]];
+			} else {
+				colf = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
+			}
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -458,8 +665,65 @@ static void lts_ecs_ham_ihires_dlores_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ham_ihires_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = decode_ham_pixel_fast(c, colors_ocs);
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = decode_ham_pixel_fast(c, colors_ocs);
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -508,8 +772,65 @@ static void lts_ecs_kehb_ihires_dlores_b1_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_kehb_ihires_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = xcolors[colors_ocs[c & 31]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = xcolors[colors_ocs[c & 31]];
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -524,7 +845,15 @@ static void lts_ecs_n_ishres_dlores_b1_genlock(int draw_start, int draw_end, int
 {
 	lts_null();
 }
+static void lts_ecs_n_ishres_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_dpf_ishres_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
+static void lts_ecs_dpf_ishres_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
@@ -532,11 +861,23 @@ static void lts_ecs_ehb_ishres_dlores_b1_genlock(int draw_start, int draw_end, i
 {
 	lts_null();
 }
+static void lts_ecs_ehb_ishres_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_ham_ishres_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
+static void lts_ecs_ham_ishres_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_kehb_ishres_dlores_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
+static void lts_ecs_kehb_ishres_dlores_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
@@ -586,8 +927,8 @@ static void lts_ecs_n_ilores_dhires_b1_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -597,6 +938,10 @@ static void lts_ecs_n_ilores_dhires_b1_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -647,11 +992,11 @@ static void lts_ecs_dpf_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -661,6 +1006,10 @@ static void lts_ecs_dpf_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -713,13 +1062,13 @@ static void lts_ecs_ehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -729,6 +1078,10 @@ static void lts_ecs_ehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -776,8 +1129,8 @@ static void lts_ecs_ham_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -787,6 +1140,10 @@ static void lts_ecs_ham_ilores_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -834,8 +1191,8 @@ static void lts_ecs_kehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -845,6 +1202,10 @@ static void lts_ecs_kehb_ilores_dhires_b1_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -884,8 +1245,8 @@ static void lts_ecs_n_ihires_dhires_b1_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -895,6 +1256,10 @@ static void lts_ecs_n_ihires_dhires_b1_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ihires_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ihires_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -934,11 +1299,11 @@ static void lts_ecs_dpf_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -948,6 +1313,10 @@ static void lts_ecs_dpf_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ihires_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -987,13 +1356,13 @@ static void lts_ecs_ehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1003,6 +1372,10 @@ static void lts_ecs_ehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ihires_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ihires_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1042,8 +1415,8 @@ static void lts_ecs_ham_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1053,6 +1426,10 @@ static void lts_ecs_ham_ihires_dhires_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ihires_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1092,8 +1469,8 @@ static void lts_ecs_kehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1103,6 +1480,10 @@ static void lts_ecs_kehb_ihires_dhires_b1_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ihires_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ishres_dhires_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1143,6 +1524,58 @@ static void lts_ecs_n_ishres_dhires_b1_genlock(int draw_start, int draw_end, int
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_n_ishres_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*gbuf++ = gpix0;
 		}
@@ -1191,6 +1624,58 @@ static void lts_ecs_dpf_ishres_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_dpf_ishres_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*gbuf++ = gpix0;
 		}
@@ -1239,6 +1724,58 @@ static void lts_ecs_ehb_ishres_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ehb_ishres_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*gbuf++ = gpix0;
 		}
@@ -1287,6 +1824,58 @@ static void lts_ecs_ham_ishres_dhires_b1_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ham_ishres_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*gbuf++ = gpix0;
 		}
@@ -1335,6 +1924,58 @@ static void lts_ecs_kehb_ishres_dhires_b1_genlock(int draw_start, int draw_end, 
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_kehb_ishres_dhires_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*gbuf++ = gpix0;
 		}
@@ -1406,8 +2047,8 @@ static void lts_ecs_n_ilores_dshres_b1_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1417,6 +2058,10 @@ static void lts_ecs_n_ilores_dshres_b1_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1489,11 +2134,11 @@ static void lts_ecs_dpf_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1503,6 +2148,10 @@ static void lts_ecs_dpf_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1581,13 +2230,13 @@ static void lts_ecs_ehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1597,6 +2246,10 @@ static void lts_ecs_ehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1660,8 +2313,8 @@ static void lts_ecs_ham_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1671,6 +2324,10 @@ static void lts_ecs_ham_ilores_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1734,8 +2391,8 @@ static void lts_ecs_kehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1745,6 +2402,10 @@ static void lts_ecs_kehb_ilores_dshres_b1_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1792,8 +2453,8 @@ static void lts_ecs_n_ihires_dshres_b1_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1803,6 +2464,10 @@ static void lts_ecs_n_ihires_dshres_b1_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ihires_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ihires_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1853,11 +2518,11 @@ static void lts_ecs_dpf_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1867,6 +2532,10 @@ static void lts_ecs_dpf_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ihires_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1919,13 +2588,13 @@ static void lts_ecs_ehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1935,6 +2604,10 @@ static void lts_ecs_ehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ihires_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ihires_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -1982,8 +2655,8 @@ static void lts_ecs_ham_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -1993,6 +2666,10 @@ static void lts_ecs_ham_ihires_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ihires_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2040,8 +2717,8 @@ static void lts_ecs_kehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			gpix = get_genlock_transparency_fast(c);
 			*gbuf++ = gpix;
@@ -2051,6 +2728,10 @@ static void lts_ecs_kehb_ihires_dshres_b1_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ihires_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ishres_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2103,6 +2784,10 @@ static void lts_ecs_n_ishres_dshres_b1_genlock(int draw_start, int draw_end, int
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_n_ishres_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_dpf_ishres_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -2153,6 +2838,10 @@ static void lts_ecs_dpf_ishres_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ishres_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ishres_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2205,6 +2894,10 @@ static void lts_ecs_ehb_ishres_dshres_b1_genlock(int draw_start, int draw_end, i
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_ehb_ishres_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_ham_ishres_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -2255,6 +2948,10 @@ static void lts_ecs_ham_ishres_dshres_b1_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ishres_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ishres_dshres_b1_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2307,6 +3004,10 @@ static void lts_ecs_kehb_ishres_dshres_b1_genlock(int draw_start, int draw_end, 
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_kehb_ishres_dshres_b1_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_n_ilores_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -2347,8 +3048,8 @@ static void lts_ecs_n_ilores_dlores_b2_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2359,6 +3060,10 @@ static void lts_ecs_n_ilores_dlores_b2_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2400,11 +3105,11 @@ static void lts_ecs_dpf_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2415,6 +3120,10 @@ static void lts_ecs_dpf_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2456,13 +3165,13 @@ static void lts_ecs_ehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2473,6 +3182,10 @@ static void lts_ecs_ehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2514,8 +3227,8 @@ static void lts_ecs_ham_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2526,6 +3239,10 @@ static void lts_ecs_ham_ilores_dlores_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2567,8 +3284,8 @@ static void lts_ecs_kehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2579,6 +3296,10 @@ static void lts_ecs_kehb_ilores_dlores_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2620,8 +3341,68 @@ static void lts_ecs_n_ihires_dlores_b2_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			*buf2++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_n_ihires_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = xcolors[colors_ocs[c]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = xcolors[colors_ocs[c]];
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2673,11 +3454,77 @@ static void lts_ecs_dpf_ihires_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			*buf2++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_dpf_ihires_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			{
+				uae_u8 dpval = dpf_lookup[c];
+				col = xcolors[colors_ocs[dpval]];
+			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			{
+				uae_u8 dpval = dpf_lookup[c];
+				colf = xcolors[colors_ocs[dpval]];
+			}
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2729,13 +3576,83 @@ static void lts_ecs_ehb_ihires_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			*buf2++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ehb_ihires_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			c &= bplehb_mask;
+			if (c <= 31) {
+				col = xcolors[colors_ocs[c]];
+			} else {
+				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
+			}
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			c &= bplehb_mask;
+			if (c <= 31) {
+				colf = xcolors[colors_ocs[c]];
+			} else {
+				colf = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
+			}
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2787,8 +3704,68 @@ static void lts_ecs_ham_ihires_dlores_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			*buf2++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ham_ihires_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = decode_ham_pixel_fast(c, colors_ocs);
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = decode_ham_pixel_fast(c, colors_ocs);
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2840,8 +3817,68 @@ static void lts_ecs_kehb_ihires_dlores_b2_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			cp += cpaddv;
+			*buf1++ = col;
+			*buf2++ = col;
+			gpix = get_genlock_transparency_fast(c);
+			*gbuf++ = gpix;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_kehb_ihires_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c;
+			uae_u32 col;
+			c = *cp;
+			clxdat |= bplcoltable[c];
+			col = xcolors[colors_ocs[c & 31]];
+			c = cp[1];
+			clxdat |= bplcoltable[c];
+			uae_u32 colf;
+			colf = xcolors[colors_ocs[c & 31]];
+			col = filter_pixel(col, colf);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2857,7 +3894,15 @@ static void lts_ecs_n_ishres_dlores_b2_genlock(int draw_start, int draw_end, int
 {
 	lts_null();
 }
+static void lts_ecs_n_ishres_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_dpf_ishres_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
+static void lts_ecs_dpf_ishres_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
@@ -2865,11 +3910,23 @@ static void lts_ecs_ehb_ishres_dlores_b2_genlock(int draw_start, int draw_end, i
 {
 	lts_null();
 }
+static void lts_ecs_ehb_ishres_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_ham_ishres_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
+static void lts_ecs_ham_ishres_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_kehb_ishres_dlores_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
+static void lts_ecs_kehb_ishres_dlores_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	lts_null();
 }
@@ -2923,8 +3980,8 @@ static void lts_ecs_n_ilores_dhires_b2_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -2935,6 +3992,10 @@ static void lts_ecs_n_ilores_dhires_b2_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -2989,11 +4050,11 @@ static void lts_ecs_dpf_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3004,6 +4065,10 @@ static void lts_ecs_dpf_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3060,13 +4125,13 @@ static void lts_ecs_ehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3077,6 +4142,10 @@ static void lts_ecs_ehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3128,8 +4197,8 @@ static void lts_ecs_ham_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3140,6 +4209,10 @@ static void lts_ecs_ham_ilores_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3191,8 +4264,8 @@ static void lts_ecs_kehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3203,6 +4276,10 @@ static void lts_ecs_kehb_ilores_dhires_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3244,8 +4321,8 @@ static void lts_ecs_n_ihires_dhires_b2_genlock(int draw_start, int draw_end, int
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3256,6 +4333,10 @@ static void lts_ecs_n_ihires_dhires_b2_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ihires_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ihires_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3297,11 +4378,11 @@ static void lts_ecs_dpf_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3312,6 +4393,10 @@ static void lts_ecs_dpf_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ihires_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3353,13 +4438,13 @@ static void lts_ecs_ehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3370,6 +4455,10 @@ static void lts_ecs_ehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ihires_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ihires_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3411,8 +4500,8 @@ static void lts_ecs_ham_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3423,6 +4512,10 @@ static void lts_ecs_ham_ihires_dhires_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ihires_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3464,8 +4557,8 @@ static void lts_ecs_kehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, 
 			uae_u32 col;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3476,6 +4569,10 @@ static void lts_ecs_kehb_ihires_dhires_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ihires_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ishres_dhires_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3518,6 +4615,61 @@ static void lts_ecs_n_ishres_dhires_b2_genlock(int draw_start, int draw_end, int
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*buf2++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_n_ishres_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*buf2++ = dpix_val0;
 			*gbuf++ = gpix0;
@@ -3569,6 +4721,61 @@ static void lts_ecs_dpf_ishres_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*buf2++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_dpf_ishres_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*buf2++ = dpix_val0;
 			*gbuf++ = gpix0;
@@ -3620,6 +4827,61 @@ static void lts_ecs_ehb_ishres_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*buf2++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ehb_ishres_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*buf2++ = dpix_val0;
 			*gbuf++ = gpix0;
@@ -3671,6 +4933,61 @@ static void lts_ecs_ham_ishres_dhires_b2_genlock(int draw_start, int draw_end, i
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*buf2++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_ham_ishres_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*buf2++ = dpix_val0;
 			*gbuf++ = gpix0;
@@ -3722,6 +5039,61 @@ static void lts_ecs_kehb_ishres_dhires_b2_genlock(int draw_start, int draw_end, 
 			uae_u32 dpix_val0, dpix_val1;
 			uae_u8 gpix0, gpix1;
 			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
+			*buf1++ = dpix_val0;
+			*buf2++ = dpix_val0;
+			*gbuf++ = gpix0;
+		}
+		if (cnt >= bpl1dat_trigger_offset && !bpl) {
+			cp += cpaddv;
+		}
+		cnt += bufaddv;
+	}
+}
+static void lts_ecs_kehb_ishres_dhires_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
+	int bufaddv = 1 << bufadd;
+	int cpaddv = 1 << cpadd;
+	uae_u8 gpix = get_genlock_transparency_border_fast(ls->bplcon3);
+	int end = draw_end;
+	if (end > hbstrt_offset) {
+		end = hbstrt_offset;
+	}
+	int cnt = draw_end;
+	if (cnt > draw_startoffset) {
+		cnt = draw_startoffset;
+	}
+	if (cnt > hbstop_offset) {
+		cnt = hbstop_offset;
+	}
+	if (cnt > bpl1dat_trigger_offset) {
+		cnt = bpl1dat_trigger_offset;
+	}
+	while (cnt < end) {
+		bool bpl = false;
+		if (cnt < bpl1dat_trigger_offset || cnt < hbstop_offset || cnt < hstrt_offset || cnt >= hstop_offset) {
+			if (cnt >= draw_startoffset) {
+				if (cnt < hbstop_offset) {
+					buf1++;
+					buf2++;
+					gbuf++;
+				} else {
+					*buf1++ = bgcolor;
+					*buf2++ = bgcolor;
+					*gbuf++ = gpix;
+				}
+			}
+		} else {
+			bpl = true;
+			uae_u8 c0 = *cp++;
+			uae_u8 c1 = *cp++;
+			uae_u32 dpix_val0, dpix_val1;
+			uae_u8 gpix0, gpix1;
+			get_shres_pix_genlock(c0, c1, &dpix_val0, &dpix_val1, &gpix0, &gpix1);
+			dpix_val0 = filter_pixel(dpix_val0, dpix_val1);
+			gpix0 = filter_pixel_genlock(gpix0, gpix1);
 			*buf1++ = dpix_val0;
 			*buf2++ = dpix_val0;
 			*gbuf++ = gpix0;
@@ -3802,8 +5174,8 @@ static void lts_ecs_n_ilores_dshres_b2_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3814,6 +5186,10 @@ static void lts_ecs_n_ilores_dshres_b2_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ilores_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ilores_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3894,11 +5270,11 @@ static void lts_ecs_dpf_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -3909,6 +5285,10 @@ static void lts_ecs_dpf_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ilores_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -3995,13 +5375,13 @@ static void lts_ecs_ehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4012,6 +5392,10 @@ static void lts_ecs_ehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ilores_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ilores_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4083,8 +5467,8 @@ static void lts_ecs_ham_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4095,6 +5479,10 @@ static void lts_ecs_ham_ilores_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ilores_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4166,8 +5554,8 @@ static void lts_ecs_kehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4178,6 +5566,10 @@ static void lts_ecs_kehb_ilores_dshres_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ilores_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ihires_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4229,8 +5621,8 @@ static void lts_ecs_n_ihires_dshres_b2_genlock(int draw_start, int draw_end, int
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4241,6 +5633,10 @@ static void lts_ecs_n_ihires_dshres_b2_genlock(int draw_start, int draw_end, int
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_n_ihires_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_dpf_ihires_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4295,11 +5691,11 @@ static void lts_ecs_dpf_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			{
 				uae_u8 dpval = dpf_lookup[c];
 				col = xcolors[colors_ocs[dpval]];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4310,6 +5706,10 @@ static void lts_ecs_dpf_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ihires_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4366,13 +5766,13 @@ static void lts_ecs_ehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			c &= bplehb_mask;
 			if (c <= 31) {
 				col = xcolors[colors_ocs[c]];
 			} else {
 				col = xcolors[(colors_ocs[c - 32] >> 1) & 0x777];
 			}
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4383,6 +5783,10 @@ static void lts_ecs_ehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ehb_ihires_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ham_ihires_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4434,8 +5838,8 @@ static void lts_ecs_ham_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = decode_ham_pixel_fast(c, colors_ocs);
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4446,6 +5850,10 @@ static void lts_ecs_ham_ihires_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_ham_ihires_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_kehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4497,8 +5905,8 @@ static void lts_ecs_kehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, 
 			*gbuf++ = gpix;
 			c = *cp;
 			clxdat |= bplcoltable[c];
-			cp += cpaddv;
 			col = xcolors[colors_ocs[c & 31]];
+			cp += cpaddv;
 			*buf1++ = col;
 			*buf2++ = col;
 			gpix = get_genlock_transparency_fast(c);
@@ -4509,6 +5917,10 @@ static void lts_ecs_kehb_ihires_dshres_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ihires_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_n_ishres_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4565,6 +5977,10 @@ static void lts_ecs_n_ishres_dshres_b2_genlock(int draw_start, int draw_end, int
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_n_ishres_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_dpf_ishres_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -4619,6 +6035,10 @@ static void lts_ecs_dpf_ishres_dshres_b2_genlock(int draw_start, int draw_end, i
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_dpf_ishres_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static void lts_ecs_ehb_ishres_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
@@ -4675,6 +6095,10 @@ static void lts_ecs_ehb_ishres_dshres_b2_genlock(int draw_start, int draw_end, i
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_ehb_ishres_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_ham_ishres_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -4730,6 +6154,10 @@ static void lts_ecs_ham_ishres_dshres_b2_genlock(int draw_start, int draw_end, i
 		cnt += bufaddv;
 	}
 }
+static void lts_ecs_ham_ishres_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
+}
 static void lts_ecs_kehb_ishres_dshres_b2_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
 {
 	uae_u16 *colors_ocs = (uae_u16*)ls->linecolorstate;
@@ -4784,6 +6212,10 @@ static void lts_ecs_kehb_ishres_dshres_b2_genlock(int draw_start, int draw_end, 
 		}
 		cnt += bufaddv;
 	}
+}
+static void lts_ecs_kehb_ishres_dshres_b2_filtered_genlock(int draw_start, int draw_end, int draw_startoffset, int hbstrt_offset, int hbstop_offset, int hstrt_offset, int hstop_offset,int bpl1dat_trigger_offset, int planes, uae_u32 bgcolor, uae_u8 *cp, uae_u8 *cp2, int cpadd, int *cpadds, int bufadd, struct linestate *ls)
+{
+	lts_null();
 }
 static LINETOSRC_FUNCF linetoscr_ecs_genlock_fast_funcs[] = {
 	lts_ecs_n_ilores_dlores_b1_genlock,
@@ -4876,5 +6308,98 @@ static LINETOSRC_FUNCF linetoscr_ecs_genlock_fast_funcs[] = {
 	lts_ecs_ehb_ishres_dshres_b2_genlock,
 	lts_ecs_ham_ishres_dshres_b2_genlock,
 	lts_ecs_kehb_ishres_dshres_b2_genlock,
+	NULL
+};
+static LINETOSRC_FUNCF linetoscr_ecs_genlock_fast_funcs_filtered[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	lts_ecs_n_ihires_dlores_b1_filtered_genlock,
+	lts_ecs_dpf_ihires_dlores_b1_filtered_genlock,
+	lts_ecs_ehb_ihires_dlores_b1_filtered_genlock,
+	lts_ecs_ham_ihires_dlores_b1_filtered_genlock,
+	lts_ecs_kehb_ihires_dlores_b1_filtered_genlock,
+	lts_ecs_n_ishres_dlores_b1_filtered_genlock,
+	lts_ecs_dpf_ishres_dlores_b1_filtered_genlock,
+	lts_ecs_ehb_ishres_dlores_b1_filtered_genlock,
+	lts_ecs_ham_ishres_dlores_b1_filtered_genlock,
+	lts_ecs_kehb_ishres_dlores_b1_filtered_genlock,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	lts_ecs_n_ishres_dhires_b1_filtered_genlock,
+	lts_ecs_dpf_ishres_dhires_b1_filtered_genlock,
+	lts_ecs_ehb_ishres_dhires_b1_filtered_genlock,
+	lts_ecs_ham_ishres_dhires_b1_filtered_genlock,
+	lts_ecs_kehb_ishres_dhires_b1_filtered_genlock,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	lts_ecs_n_ihires_dlores_b2_filtered_genlock,
+	lts_ecs_dpf_ihires_dlores_b2_filtered_genlock,
+	lts_ecs_ehb_ihires_dlores_b2_filtered_genlock,
+	lts_ecs_ham_ihires_dlores_b2_filtered_genlock,
+	lts_ecs_kehb_ihires_dlores_b2_filtered_genlock,
+	lts_ecs_n_ishres_dlores_b2_filtered_genlock,
+	lts_ecs_dpf_ishres_dlores_b2_filtered_genlock,
+	lts_ecs_ehb_ishres_dlores_b2_filtered_genlock,
+	lts_ecs_ham_ishres_dlores_b2_filtered_genlock,
+	lts_ecs_kehb_ishres_dlores_b2_filtered_genlock,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	lts_ecs_n_ishres_dhires_b2_filtered_genlock,
+	lts_ecs_dpf_ishres_dhires_b2_filtered_genlock,
+	lts_ecs_ehb_ishres_dhires_b2_filtered_genlock,
+	lts_ecs_ham_ishres_dhires_b2_filtered_genlock,
+	lts_ecs_kehb_ishres_dhires_b2_filtered_genlock,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL
 };

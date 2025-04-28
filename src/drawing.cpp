@@ -93,10 +93,12 @@ struct denise_rga_queue
 	int calib_start;
 	int calib_len;
 	bool lol, lof;
+	int hdelay;
 	uae_u16 strobe;
 	int strobe_pos;
 	int erase;
 	struct linestate *ls;
+	uae_u16 reg, val;
 };
 
 static volatile uae_atomic rga_queue_read, rga_queue_write;
@@ -106,6 +108,11 @@ static struct denise_rga_queue temp_line;
 static struct denise_rga_queue *this_line;
 static volatile bool thread_debug_lock;
 
+static void denise_handle_quick_strobe(uae_u16 strobe, int offset, int vpos);
+static void draw_denise_vsync(int);
+static void denise_update_reg(uae_u16 reg, uae_u16 v, int linecnt);
+static void draw_denise_line(int gfx_ypos, nln_how how, uae_u32 linecnt, int startpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lol, int hdelay, struct linestate *ls);
+
 static void quick_denise_rga(int linecnt, int startpos, int endpos)
 {
 	int pos = startpos;
@@ -114,15 +121,12 @@ static void quick_denise_rga(int linecnt, int startpos, int endpos)
 	while (pos != endpos) {
 		struct denise_rga *rd = &rga_denise[pos];
 		if (rd->line == linecnt && rd->rga != 0x1fe && (rd->rga < 0x38 || rd->rga >= 0x40)) {
-			denise_update_reg(rd->rga, rd->v);
+			denise_update_reg(rd->rga, rd->v, linecnt);
 		}
 		pos++;
 		pos &= DENISE_RGA_SLOT_MASK;
 	}
 }
-
-static void denise_handle_quick_strobe(uae_u16 strobe, int offset, int vpos);
-static void draw_denise_vsync(int);
 
 static void update_overlapped_cycles(int endpos)
 {
@@ -134,12 +138,10 @@ static void update_overlapped_cycles(int endpos)
 
 static void read_denise_line_queue(void)
 {
+	bool nolock = false;
+
 	while (rga_queue_read == rga_queue_write) {
 		uae_sem_wait(&write_sem);
-	}
-
-	if (!thread_debug_lock) {
-		write_log("read_denise_line_queue: queue processed without lock!\n");
 	}
 
 	struct denise_rga_queue *q = &rga_queue[rga_queue_read & DENISE_RGA_SLOT_CHUNKS_MASK];
@@ -154,7 +156,7 @@ static void read_denise_line_queue(void)
 
 
 	if (q->type == 0) {
-		draw_denise_line(q->gfx_ypos, q->how, q->linecnt, q->startpos, q->total, q->skip, q->skip2, q->dtotal, q->calib_start, q->calib_len, q->lol, q->ls);
+		draw_denise_line(q->gfx_ypos, q->how, q->linecnt, q->startpos, q->total, q->skip, q->skip2, q->dtotal, q->calib_start, q->calib_len, q->lol, q->hdelay, q->ls);
 		next = true;
 	} else if (q->type == 1) {
 		draw_denise_bitplane_line_fast(q->gfx_ypos, q->how, q->ls);
@@ -167,6 +169,15 @@ static void read_denise_line_queue(void)
 		next = true;
 	} else if (q->type == 5) {
 		draw_denise_vsync(q->erase);
+	} else if (q->type == 6) {
+		denise_update_reg(q->reg, q->val, q->linecnt);
+		nolock = true;
+	}
+
+	if (!nolock) {
+		if (!thread_debug_lock) {
+			write_log("read_denise_line_queue: queue processed without lock!\n");
+		}
 	}
 
 	//evt_t t2 = read_processor_time();
@@ -177,8 +188,10 @@ static void read_denise_line_queue(void)
 		update_overlapped_cycles(q->endpos);
 	}
 
-	if (!thread_debug_lock) {
-		write_log("read_denise_line_queue: queue lock was released during draw!\n");
+	if (!nolock) {
+		if (!thread_debug_lock) {
+			write_log("read_denise_line_queue: queue lock was released during draw!\n");
+		}
 	}
 
 #if 0
@@ -395,7 +408,7 @@ static bool denise_strlong_unalign, strlong_emulation;
 static int denise_phbstrt, denise_phbstop, denise_phbstrt_lores, denise_phbstop_lores;
 static int linear_denise_vbstrt, linear_denise_vbstop;
 static int linear_denise_hbstrt, linear_denise_hbstop;
-static int denise_visible_lines;
+static int denise_visible_lines, denise_visible_lines_counted;
 static uae_u16 hbstrt_denise_reg, hbstop_denise_reg;
 static uae_u16 fmode_denise, denise_bplfmode, denise_sprfmode;
 static bool denise_sprfmode64, denise_bplfmode64;
@@ -477,7 +490,7 @@ static int denise_spr_nearestcnt;
 static int denise_y_start, denise_y_end;
 
 static int denise_pixtotal, denise_pixtotalv, denise_linecnt, denise_startpos, denise_cck, denise_total;
-static int denise_pixtotalskip, denise_pixtotalskip2;
+static int denise_pixtotalskip, denise_pixtotalskip2, denise_hdelay;
 static int denise_pixtotal_max;
 static uae_u32 *buf1, *buf2, *buf_d;
 static uae_u8 *gbuf, *gbuf_end;
@@ -488,6 +501,8 @@ static int hstrt_offset, hstop_offset;
 static int bpl1dat_trigger_offset;
 static int internal_pixel_cnt, internal_pixel_start_cnt;
 static bool no_denise_lol, denise_strlong_seen;
+#define STRLONG_SEEN_DELAY 2
+static int denise_strlong_seen_delay;
 
 void set_inhibit_frame(int monid, int bit)
 {
@@ -567,7 +582,7 @@ bool isnativevidbuf(int monid)
 	struct vidbuf_description *vidinfo = &adisplays[monid].gfxvidinfo;
 	if (vidinfo->outbuffer == NULL)
 		return false;
-	if (vidinfo->outbuffer == &vidinfo->drawbuffer)
+	if (vidinfo->outbuffer == vidinfo->inbuffer)
 		return true;
 	return !vidinfo->outbuffer->hardwiredpositioning;
 }
@@ -590,9 +605,8 @@ static int stored_left_start, stored_top_start, stored_width, stored_height;
 void get_custom_topedge (int *xp, int *yp, bool max)
 {
 	if (isnativevidbuf(0) && !max) {
-		int x, y;
-		x = visible_left_border;
-		y = minfirstline << currprefs.gfx_vresolution;
+		int x = visible_left_border;
+		int y = minfirstline << currprefs.gfx_vresolution;
 #if 0
 		int dbl1, dbl2;
 		dbl2 = dbl1 = currprefs.gfx_vresolution;
@@ -632,6 +646,9 @@ int get_vertical_visible_height(bool useoldsize)
 				h--;
 			}
 		}
+		if (currprefs.gfx_overscanmode >= OVERSCANMODE_BROADCAST) {
+			h += 2;
+		}
 		h <<= currprefs.gfx_vresolution;
 		if (h > vidinfo->inbuffer->inheight) {
 			h = vidinfo->inbuffer->inheight;
@@ -646,7 +663,11 @@ int get_vertical_visible_height(bool useoldsize)
 			hardwired = (new_beamcon0 & BEAMCON0_VARVBEN) == 0;
 		}
 		if (hardwired) {
-			int hh = denise_visible_lines << currprefs.gfx_vresolution;
+			int hh = denise_visible_lines_counted;
+			if (currprefs.gfx_overscanmode >= OVERSCANMODE_BROADCAST) {
+				hh += 2;
+			}
+			hh <<= currprefs.gfx_vresolution;
 			if (h > hh) {
 				h = hh;
 			}
@@ -696,9 +717,10 @@ void check_custom_limits(void)
 	denise_vblank_extra_top = -1;
 	denise_vblank_extra_bottom = 30000;
 
-	// backwards compatibility, old 0x38 start is gone.
 	if (left > 0) {
 		left += (0x38 * 4) >> (RES_MAX - currprefs.gfx_resolution);
+	}
+	if (right > 0) {
 		right += (0x38 * 4) >> (RES_MAX - currprefs.gfx_resolution);
 	}
 
@@ -755,7 +777,7 @@ void set_custom_limits (int w, int h, int dx, int dy, bool blank)
 	if (currprefs.gfx_overscanmode < OVERSCANMODE_OVERSCAN) {
 		int wadd = (OVERSCANMODE_OVERSCAN - currprefs.gfx_overscanmode) * 8;
 		if (currprefs.gfx_overscanmode == 0) {
-			wadd -= 4;
+			wadd -= 6;
 		}
 		hwadd = wadd << hresolution;
 		vwadd = ((wadd - (vsync_startline + 1)) << currprefs.gfx_vresolution);
@@ -780,7 +802,7 @@ void set_custom_limits (int w, int h, int dx, int dy, bool blank)
 		visible_left_start = visible_left_border + dx;
 		visible_right_stop = visible_left_start + w;
 		if (currprefs.gfx_overscanmode >= OVERSCANMODE_BROADCAST) {
-			visible_right_stop += 2 << currprefs.gfx_vresolution;
+			visible_right_stop += 2 << currprefs.gfx_resolution;
 		}
 	}
 
@@ -868,9 +890,9 @@ int get_custom_limits(int *pw, int *ph, int *pdx, int *pdy, int *prealh, int *hr
 		interlace_count = 0;
 	}
 
-	int diwfirst, diwlast;
-	diwfirst = diwfirstword_total << 2;
-	diwlast = diwlastword_total << 2;
+	int skip = denise_hdelay << (RES_MAX + 1);
+	int diwfirst = diwfirstword_total + skip;
+	int diwlast = diwlastword_total + skip;
 
 	int ddffirst = ddffirstword_total << (RES_MAX + 1);
 	int ddflast = ddflastword_total << (RES_MAX + 1);
@@ -1889,6 +1911,8 @@ static void finish_drawing_frame(bool drawlines)
 	}
 
 	vbout->last_drawn_line = 0;
+	vbout->hardwiredpositioning = false;
+
 	draw_frame_extras(vbin, -1, -1);
 
 #ifdef WITH_SPECIALMONITORS
@@ -2173,7 +2197,7 @@ void vsync_handle_redraw(int long_field, uae_u16 bplcon0p, uae_u16 bplcon3p, boo
 #endif
 	}
 
-	gui_flicker_led (-1, 0, 0);
+	gui_flicker_led(-1, 0, 0);
 }
 
 static int  dummy_lock(struct vidbuf_description *gfxinfo, struct vidbuffer *vb)
@@ -2260,7 +2284,7 @@ void reset_drawing(void)
 	denise_reset(false);
 	select_lts();
 
-	no_denise_lol = !currprefs.cpu_memory_cycle_exact; // && !currprefs.chipset_hr;
+	no_denise_lol = !currprefs.cpu_memory_cycle_exact;
 }
 
 static void gen_direct_drawing_table(void)
@@ -2274,7 +2298,7 @@ static void gen_direct_drawing_table(void)
 #endif
 }
 
-void drawing_init (void)
+void drawing_init(void)
 {
 	int monid = 0;
 	struct amigadisplay *ad = &adisplays[monid];
@@ -2293,9 +2317,9 @@ void drawing_init (void)
 
 	gen_direct_drawing_table();
 
-	uae_sem_init (&gui_sem, 0, 1);
+	uae_sem_init(&gui_sem, 0, 1);
 #ifdef PICASSO96
-	if (!isrestore ()) {
+	if (!isrestore()) {
 		ad->picasso_on = 0;
 		ad->picasso_requested_on = 0;
 		ad->gf_index = GF_NORMAL;
@@ -2340,23 +2364,17 @@ int isvsync(void)
 {
 	struct amigadisplay *ad = &adisplays[0];
 	if (ad->picasso_on)
-		return isvsync_rtg ();
+		return isvsync_rtg();
 	else
-		return isvsync_chipset ();
+		return isvsync_chipset();
 }
 
 void get_mode_blanking_limits(int *phbstop, int *phbstrt, int *pvbstop, int *pvbstrt)
 {
 	*pvbstop = linear_denise_vbstrt;
 	*pvbstrt = linear_denise_vbstop;
-	int strt, stop;
-	if (new_beamcon0 & BEAMCON0_VARVBEN) {
-		stop = linear_denise_hbstop;
-		strt = linear_denise_hbstrt;
-	} else {
-		stop = linear_denise_hbstop << 2;
-		strt = linear_denise_hbstrt << 2;
-	}
+	int stop = linear_denise_hbstop;
+	int strt = linear_denise_hbstrt;
 	int len = (current_linear_hpos << 3) - (stop - strt);
 	*phbstop = stop;
 	*phbstrt = stop + len;
@@ -2567,9 +2585,11 @@ static void sprwrite_64(int reg, uae_u64 v)
 			int x = s->xpos;;
 			if (diwfirstword_total > x && x >= (48 << RES_MAX)) {
 				diwfirstword_total = x;
+				diwfirstword_total <<= 2;
 			}
 			if (diwlastword_total < x + 16 && x <= (448 << RES_MAX)) {
 				diwlastword_total = x + 16;
+				diwlastword_total <<= 2;
 			}
 #endif
 		}
@@ -2620,9 +2640,11 @@ static void sprwrite(int reg, uae_u32 v)
 				int x = s->xpos;;
 				if (diwfirstword_total > x && x >= (48 << RES_MAX)) {
 					diwfirstword_total = x;
+					diwfirstword_total <<= 2;
 				}
 				if (diwlastword_total < x + 16 && x <= (448 << RES_MAX)) {
 					diwlastword_total = x + 16;
+					diwlastword_total <<= 2;
 				}
 			}
 #endif
@@ -3064,6 +3086,11 @@ static void expand_bplcon0_early(uae_u16 v)
 	}
 }
 
+int gethresolution(void)
+{
+	return hresolution;
+}
+
 static void sethresolution(void)
 {
 	hresolution = currprefs.gfx_resolution;
@@ -3126,7 +3153,7 @@ static void expand_bplcon0(uae_u16 v)
 	update_fmode();
 	update_specials();
 	update_sprres();
-	if ((old & 1) != (bplcon0_denise)) {
+	if ((old & 1) != (bplcon0_denise & 1)) {
 		update_ecs_features();
 		update_genlock();
 	}
@@ -3219,11 +3246,13 @@ static void expand_clxcon2(uae_u16 v)
 static void set_strlong(void)
 {
 	denise_strlong_seen = true;
+	denise_strlong_seen_delay = STRLONG_SEEN_DELAY;
 	if (no_denise_lol) {
+		int add = 1 << hresolution;
 		denise_strlong = false;
 		denise_strlong_fast = true;
-		denise_lol_shift_enable = false;
-		denise_lol_shift_prev = 0;
+		denise_lol_shift_enable = true;
+		denise_lol_shift_prev = add;
 		return;
 	}
 	denise_strlong = true;
@@ -3699,6 +3728,8 @@ static void handle_strobes(struct denise_rga *rd)
 		linear_denise_vbstrt = this_line->linear_vpos;
 	} else if (rd->rga != 0x03c && previous_strobe == 0x03c) {
 		linear_denise_vbstop = this_line->linear_vpos;
+		denise_visible_lines++;
+		denise_visible_lines_counted = denise_visible_lines;
 		denise_visible_lines = 0;
 	}
 	if (rd->rga == 0x03c && previous_strobe == 0x03c) {
@@ -3721,9 +3752,15 @@ static void expand_drga(struct denise_rga *rd)
 			agnus_lol = (rd->flags & DENISE_RGA_FLAG_LOL_ON) != 0;
 			if (no_denise_lol) {
 				int add = 1 << hresolution;
-				agnus_lol = false;
-				denise_lol_shift_enable = true;
-				denise_lol_shift_prev = add;
+				if (denise_strlong_seen) {
+					agnus_lol = false;
+					denise_lol_shift_enable = true;
+					denise_lol_shift_prev = add;
+				} else {
+					agnus_lol = false;
+					denise_lol_shift_enable = false;
+					denise_lol_shift_prev = add;
+				}
 			} else {
 				if (!agnus_lol && (!denise_lol_shift_prev || denise_lol_shift_enable)) {
 					int add = 1 << hresolution;
@@ -3858,14 +3895,53 @@ static void expand_drga(struct denise_rga *rd)
 	}
 }
 
-void denise_update_reg(uae_u16 reg, uae_u16 v)
+static void flush_fast_rga(int linecnt)
 {
+	// extract fast CPU RGA pipeline
+	while (rga_denise_fast_write != rga_denise_fast_read) {
+		struct denise_rga *rd = &rga_denise_fast[rga_denise_fast_read];
+		if (linecnt < rd->line) {
+			break;
+		}
+		expand_drga(rd);
+		expand_drga_early(rd);
+		expand_drga_early2x(rd);
+		rga_denise_fast_read++;
+		rga_denise_fast_read &= DENISE_RGA_SLOT_FAST_TOTAL - 1;
+	}
+}
+
+static void denise_update_reg(uae_u16 reg, uae_u16 v, int linecnt)
+{
+	// makes sure fast queue is flushed first
+	if (rga_denise_fast_write != rga_denise_fast_read) {
+		flush_fast_rga(linecnt);
+	}
+
 	struct denise_rga dr = { 0 };
 	dr.rga = reg;
 	dr.v = v;
 	expand_drga_early2x(&dr);
 	expand_drga_early(&dr);
 	expand_drga(&dr);
+	// handle all queued writes immediately
+	reswitch_unalign = 0;
+	update_bplcon1();
+	if (denise_diwhigh2 >= 0) {
+		denise_diwhigh = denise_diwhigh2;
+		denise_diwhigh2 = -1;
+		diwhigh_written = true;
+		calchdiw();
+	}
+	if (aga_delayed_color_idx >= 0) {
+		update_color(aga_delayed_color_idx, aga_delayed_color_val, aga_delayed_color_con2, aga_delayed_color_con3);
+		aga_delayed_color_idx = -1;
+	}
+	bplmode = bplmode_new;
+	sbasecol[0] = sbasecol2[0];
+	sbasecol[1] = sbasecol2[1];
+	aga_unalign0 = 0;
+	aga_unalign1 = 0;
 	check_lts_request();
 }
 
@@ -4334,7 +4410,11 @@ static void do_hbstrt(int cnt)
 		}
 		do_hb();
 		hstart_new();
-		linear_denise_hbstrt = cnt;
+		linear_denise_hbstrt = internal_pixel_cnt;
+		// hstop was not matched?
+		if (!diwlastword_total && bpl1dat_trigger_offset >= 0) {
+			diwlastword_total = internal_pixel_cnt;
+		}
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4357,7 +4437,7 @@ static void do_hbstop(int cnt)
 			delayed_vblank_ecs = 0;
 		}
 		do_hb();
-		linear_denise_hbstop = cnt;
+		linear_denise_hbstop = internal_pixel_cnt;
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4379,7 +4459,7 @@ static void do_phbstrt_aga(int cnt)
 			denise_blank_active = denise_blank_enabled ? denise_blank_active2 : false;
 		}
 		hstart_new();
-		linear_denise_hbstrt = cnt;
+		linear_denise_hbstrt = internal_pixel_cnt;
 		do_exthblankon_aga();
 		copy_strlong();
 		denise_sprite_blank_active = denise_blank_active;
@@ -4399,7 +4479,7 @@ static void do_phbstop_aga(int cnt)
 		}
 		do_exthblankon_aga();
 		denise_sprite_blank_active = denise_blank_active;
-		linear_denise_hbstop = cnt;
+		linear_denise_hbstop = internal_pixel_cnt;
 	}
 }
 
@@ -4418,7 +4498,7 @@ static void do_phbstrt_ecs(int cnt)
 		}
 		hstart_new();
 		do_exthblankon_ecs();
-		linear_denise_hbstrt = cnt;
+		linear_denise_hbstrt = internal_pixel_cnt;
 	}
 }
 static void do_phbstop_ecs(int cnt)
@@ -4435,7 +4515,7 @@ static void do_phbstop_ecs(int cnt)
 			denise_sprite_blank_active = denise_blank_active;
 		}
 		do_exthblankon_ecs();
-		linear_denise_hbstop = cnt;
+		linear_denise_hbstop = internal_pixel_cnt;
 	}
 }
 
@@ -4447,8 +4527,8 @@ static void do_hstrt_aga(int cnt)
 	sprites_hidden = sprites_hidden2;
 	last_bpl_pix = 0;
 	setlasthamcolor();
-	if (cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
-		diwfirstword_total = cnt;
+	if (internal_pixel_cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
+		diwfirstword_total = internal_pixel_cnt;
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4462,8 +4542,8 @@ static void do_hstop_aga(int cnt)
 	sprites_hidden2 |= sprite_hidden_mask;
 	sprites_hidden = sprites_hidden2;
 	denise_hdiw = false;
-	if (cnt > diwlastword_total && bpl1dat_trigger_offset >= 0) {
-		diwlastword_total = cnt;
+	if (internal_pixel_cnt > diwlastword_total && bpl1dat_trigger_offset >= 0) {
+		diwlastword_total = internal_pixel_cnt;
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4479,8 +4559,8 @@ static void do_hstrt_ecs(int cnt)
 	sprites_hidden = sprites_hidden2;
 	last_bpl_pix = 0;
 	setlasthamcolor();
-	if (cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
-		diwfirstword_total = cnt;
+	if (internal_pixel_cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
+		diwfirstword_total = internal_pixel_cnt;
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4499,8 +4579,8 @@ static void do_hstop_ecs(int cnt)
 		sprites_hidden2 |= sprite_hidden_mask;
 		sprites_hidden = sprites_hidden2;
 	}
-	if (cnt > diwlastword_total && bpl1dat_trigger_offset >= 0) {
-		diwlastword_total = cnt;
+	if (internal_pixel_cnt > diwlastword_total && bpl1dat_trigger_offset >= 0) {
+		diwlastword_total = internal_pixel_cnt;
 	}
 #ifdef DEBUGGER
 	if (debug_dma) {
@@ -4565,7 +4645,7 @@ static void denise_handle_quick_strobe(uae_u16 strobe, int offset, int vpos)
 	}
 }
 
-bool denise_update_reg_queued(uae_u16 reg, uae_u16 v, uae_u32 cycle)
+bool denise_update_reg_queued(uae_u16 reg, uae_u16 v, uae_u32 linecnt)
 {
 	if (((rga_denise_fast_write + 1) & (DENISE_RGA_SLOT_FAST_TOTAL - 1))  == rga_denise_fast_read) {
 		return false;
@@ -4573,12 +4653,11 @@ bool denise_update_reg_queued(uae_u16 reg, uae_u16 v, uae_u32 cycle)
 	struct denise_rga *r = &rga_denise_fast[rga_denise_fast_write];
 	r->rga = reg;
 	r->v = v;
-	r->line = cycle;
+	r->line = linecnt;
 	rga_denise_fast_write++;
 	rga_denise_fast_write &= DENISE_RGA_SLOT_FAST_TOTAL - 1;
 	return true;
 }
-
 
 static void do_denise_cck(int linecnt, int startpos, int i)
 {
@@ -4592,18 +4671,7 @@ static void do_denise_cck(int linecnt, int startpos, int i)
 	denise_hcounter_new &= 511;
 
 	if (rga_denise_fast_write != rga_denise_fast_read) {
-		// extract fast CPU RGA pipeline
-		while (rga_denise_fast_write != rga_denise_fast_read) {
-			struct denise_rga *rd = &rga_denise_fast[rga_denise_fast_read];
-			if (linecnt < rd->line) {
-				break;
-			}
-			expand_drga(rd);
-			expand_drga_early(rd);
-			expand_drga_early2x(rd);
-			rga_denise_fast_read++;
-			rga_denise_fast_read &= DENISE_RGA_SLOT_FAST_TOTAL - 1;
-		}
+		flush_fast_rga(linecnt);
 	}
 
 	struct denise_rga *rd;
@@ -5081,6 +5149,20 @@ static void emulate_black_level_calibration(uae_u32 *b1, uae_u32 *b2, uae_u32 *d
 	}
 }
 
+static uae_u8 filter_pixel_genlock(uae_u8 p1, uae_u8 p2)
+{
+	return p1 | p2;
+}
+
+static uae_u32 filter_pixel(uae_u32 p1, uae_u32 p2)
+{
+	uae_u32 v = 0;
+	v |= ((((p1 >> 16) & 0xff) + ((p2 >> 16) & 0xff)) / 2) << 16;
+	v |= ((((p1 >>  8) & 0xff) + ((p2 >>  8) & 0xff)) / 2) << 8;
+	v |= ((((p1 >>  0) & 0xff) + ((p2 >>  0) & 0xff)) / 2) << 0;
+	return v;
+}
+
 // ultra extreme debug pixel patterns
 static uint32_t decode_denise_specials_debug(uint32_t v, int inc)
 {
@@ -5273,14 +5355,19 @@ static void draw_denise_vsync(int erase)
 	struct vidbuf_description *vidinfo = &adisplays[0].gfxvidinfo;
 	struct vidbuffer *vb = vidinfo->inbuffer;
 
-	if (!denise_strlong_seen && strlong_emulation) {
-		strlong_emulation = false;
-		write_log("STRLONG strobe emulation deactivated.\n");
-		select_lts();
-		denise_lol_shift_enable = false;
-		denise_lol_shift_prev = 0;
+	if (denise_strlong_seen_delay <= 0) {
+		if (!denise_strlong_seen && strlong_emulation) {
+			int add = 1 << hresolution;
+			strlong_emulation = false;
+			write_log("STRLONG strobe emulation deactivated.\n");
+			select_lts();
+			denise_lol_shift_enable = false;
+			denise_lol_shift_prev = add;
+		}
+		denise_strlong_seen = false;
+	} else {
+		denise_strlong_seen_delay--;
 	}
-	denise_strlong_seen = false;
 
 	if (erase) {
 		// clear lines if mode height changed
@@ -5309,7 +5396,7 @@ static void denise_draw_update(void)
 	denise_max_odd_even = denise_odd_even;
 }
 
-void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int startpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lol, struct linestate *ls)
+static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int startpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lol, int hdelay, struct linestate *ls)
 {
 	bool fullline = false; // currprefs.chipset_hr;
 
@@ -5321,6 +5408,7 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 	denise_startpos = startpos;
 	denise_total = total;
 	denise_cck = 0;
+	denise_hdelay = hdelay;
 
 	denise_draw_update();
 
@@ -5448,29 +5536,35 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 		uae_u32 *hbstrt_ptr2 = buf2 && hbstrt_offset2 >= 0 ? buf2t + hbstrt_offset2 : NULL;
 		uae_u32 *hbstop_ptr2 = buf2 && hbstop_offset2 >= 0 ? buf2t + hbstop_offset2 : NULL;
 		// blank last pixel row if normal overscan mode, it might have NTSC artifacts
-		if (denise_strlong_seen && denise_pixtotal_max != -0x7fffffff && hbstrt_ptr1 && currprefs.gfx_overscanmode <= OVERSCANMODE_OVERSCAN && !ecs_denise) {
+		if (denise_strlong_seen && denise_pixtotal_max != -0x7fffffff && hbstrt_ptr1) {
 			int add = 1 << hresolution;
-			uae_u32 *p1 = hbstrt_ptr1 - denise_lol_shift_prev;
-			uae_u32 *p2 = hbstrt_ptr2 - denise_lol_shift_prev;
-			for (int i = 0; i < add * 2; i++) {
-				if (hbstrt_ptr1) {
-					*p1++ = BLANK_COLOR;
+			uae_u32 *ptre1 = buf1;
+			uae_u32 *ptre2 = buf2;
+			if (no_denise_lol) {
+				int padd = lol ? 0 : 2;
+				uae_u32 *p1 = hbstrt_ptr1 - padd * add;
+				uae_u32 *p2 = hbstrt_ptr2 - padd * add;
+				for (int i = 0; i < add * 2; i++) {
+					if (hbstrt_ptr1 && p1 < ptre1) {
+						*p1++ = BLANK_COLOR;
+					}
+					if (hbstrt_ptr2 && p2 < ptre2) {
+						*p2++ = BLANK_COLOR;
+					}
 				}
-				if (hbstrt_ptr2) {
-					*p2++ = BLANK_COLOR;
+				if (!lol) {
+					hbstrt_offset -= (1 << RES_MAX) * 2;
 				}
-			}
-		}
-		if (1 && no_denise_lol && denise_pixtotal_max != -0x7fffffff && hbstrt_ptr1 && !lol_fast && denise_strlong_seen) {
-			int add = 1 << hresolution;
-			uae_u32 *p1 = hbstrt_ptr1 - 2 * add;
-			uae_u32 *p2 = hbstrt_ptr2 - 2 * add;
-			for (int i = 0; i < add * 2; i++) {
-				if (hbstrt_ptr1) {
-					*p1++ = BLANK_COLOR;
-				}
-				if (hbstrt_ptr2) {
-					*p2++ = BLANK_COLOR;
+			} else if (!ecs_denise && currprefs.gfx_overscanmode <= OVERSCANMODE_OVERSCAN) {
+				uae_u32 *p1 = hbstrt_ptr1 - denise_lol_shift_prev;
+				uae_u32 *p2 = hbstrt_ptr2 - denise_lol_shift_prev;
+				for (int i = 0; i < add * 2; i++) {
+					if (hbstrt_ptr1 && p1 < ptre1) {
+						*p1++ = BLANK_COLOR;
+					}
+					if (hbstrt_ptr2 && p2 < ptre2) {
+						*p2++ = BLANK_COLOR;
+					}
 				}
 			}
 		}
@@ -5489,53 +5583,73 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 						ptr = hbstrt_ptr1;
 						ptrs = buf1t;
 						ptre = buf1;
-						lolshift = lol ? add : 0;
+						lolshift = no_denise_lol ? (lol ? add : -add) : (lol ? add : 0);
 						w = ww2;
 						break;
 					case 1:
 						ptr = hbstrt_ptr2;
 						ptrs = buf2t;
 						ptre = buf2;
-						lolshift = lol ? add : 0;
+						lolshift = no_denise_lol ? (lol ? add : -add) : (lol ? add : 0);
 						w = ww2;
 						break;
 					case 2:
 						ptr = hbstop_ptr1;
 						ptrs = buf1t;
 						ptre = buf1;
-						lolshift = lol ? 0 : add;
+						lolshift = lol || no_denise_lol ? 0 : add;
 						w = ww1;
 						break;
 					case 3:
 						ptr = hbstop_ptr2;
 						ptrs = buf2t;
 						ptre = buf2;
-						lolshift = lol ? 0 : add;
+						lolshift = lol || no_denise_lol ? 0 : add;
 						w = ww1;
 						break;
 				}
 				if (ptr && w) {
-					uae_u32 *p1 = ptr + (denise_strlong_seen ? lolshift : 0);
-					int ww = w;
+					int lolshift2 = denise_strlong_seen ? lolshift : 0;
+					uae_u32 *p1 = ptr + lolshift2;
 					if (i >= 2) {
-						if (p1 + ww > ptrs && p1 + ww < ptre) {
+						if (p1 + w > ptrs && p1 < ptre) {
+							int wxadd = 0;
 							if (p1 < ptrs) {
-								int wadd = addrdiff(p1, ptrs);
-								ww -= wadd;
-								p1 += add;
+								wxadd = addrdiff(p1, ptrs);
+								w -= wxadd;
+								p1 += wxadd;
 							}
-							memset(p1, DEBUG_TVOVERSCAN_H_GRAYSCALE, ww * sizeof(uae_u32));
-							if (bufg) {
-								uae_u8 *gp1 = (p1 - ptrs) + bufg;
-								memset(gp1, 0, ww);
+							if (p1 + w > ptre) {
+								int wadd = addrdiff(p1 + w, ptre);
+								w -= wadd;
+							}
+							if (w > 0) {
+								memset(p1, DEBUG_TVOVERSCAN_H_GRAYSCALE, w * sizeof(uae_u32));
+								if (bufg) {
+									uae_u8 *gp1 = (p1 - ptrs) + bufg + wxadd;
+									memset(gp1, 0, w);
+								}
 							}
 						}
 					} else {
-						if (p1 < ptre && p1 - w >= ptrs) {
-							memset(p1 - ww, DEBUG_TVOVERSCAN_H_GRAYSCALE, w * sizeof(uae_u32));
-							if (bufg) {
-								uae_u8 *gp1 = (p1 - ptrs) + bufg;
-								memset(gp1 - ww, 0, w);
+						if (p1 - w < ptre && p1 >= ptrs) {
+							int wxadd = 0;
+							p1 -= w;
+							if (p1 < ptrs) {
+								wxadd = addrdiff(ptrs, p1);
+								p1 += wxadd;
+								w -= wxadd;
+							}
+							if (p1 + w > ptre) {
+								int wadd = addrdiff(p1 + w, ptre);
+								w -= wadd;
+							}
+							if (w > 0) {
+								memset(p1, DEBUG_TVOVERSCAN_H_GRAYSCALE, w * sizeof(uae_u32));
+								if (bufg) {
+									uae_u8 *gp1 = (p1 - ptrs) + bufg + wxadd;
+									memset(gp1, 0, w);
+								}
 							}
 						}
 					}
@@ -5557,6 +5671,8 @@ void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, int start
 		ls->internal_pixel_cnt = internal_pixel_cnt;
 		ls->internal_pixel_start_cnt = internal_pixel_start_cnt;
 		ls->blankedline = blankedline;
+		ls->strlong_seen = denise_strlong_seen;
+		ls->lol = lol;
 	}
 
 	resolution_count[denise_res]++;
@@ -5633,12 +5749,26 @@ static void select_lts(void)
 			int planes = denise_max_planes > 4 ? 1 : 0;
 			int oddeven = denise_max_odd_even ? 1 : 0;
 			int idx = (oddeven) + (bm * 2) + (planes * 2 * 5) + (spr * 2 * 5 * 2) + (denise_res * 2 * 5 * 2 * 2) + (hresolution * 2 * 5 * 2 * 2 * 3) + (bpldat_fmode * 2 * 5 * 2 * 2 * 3 * 3);
-			lts = linetoscr_aga_genlock_funcs[idx];
+			if (currprefs.gfx_lores_mode) {
+				lts = linetoscr_aga_genlock_funcs_filtered[idx];
+				if (!lts) {
+					lts = linetoscr_aga_genlock_funcs[idx];
+				}
+			} else {
+				lts = linetoscr_aga_genlock_funcs[idx];
+			}
 		} else {
 			int planes = denise_max_planes > 0 ? (denise_max_planes - 1) / 2 : 0;
 			int oddeven = denise_max_odd_even ? 1 : 0;
 			int idx = (oddeven) + (bm * 2) + (planes * 2 * 5) + (spr * 2 * 5 * 4) + (denise_res * 2 * 5 * 4 * 2) + (hresolution * 2 * 5 * 4 * 2 * 3) + (bpldat_fmode * 2 * 5 * 4 * 2 * 3 * 3);
-			lts = linetoscr_aga_funcs[idx];
+			if (currprefs.gfx_lores_mode) {
+				lts = linetoscr_aga_funcs_filtered[idx];
+				if (!lts) {
+					lts = linetoscr_aga_funcs[idx];
+				}
+			} else {
+				lts = linetoscr_aga_funcs[idx];
+			}
 		}
 
 	} else if (ecs_denise && denise_res == RES_SUPERHIRES) {
@@ -5646,11 +5776,19 @@ static void select_lts(void)
 		if (hresolution == RES_LORES) {
 			lts = lts_null;
 		} else {
-			int idx = hresolution - 1;
-			if (need_genlock_data) {
-				lts = linetoscr_ecs_shres_genlock_funcs[idx];
+			int idx = hresolution;
+			if (idx == RES_HIRES && currprefs.gfx_lores_mode) {
+				if (need_genlock_data) {
+					lts = lts_ecs_shres_dhires_genlock_filtered;
+				} else {
+					lts = lts_ecs_shres_dhires_filtered;
+				}
 			} else {
-				lts = linetoscr_ecs_shres_funcs[idx];
+				if (need_genlock_data) {
+					lts = linetoscr_ecs_shres_genlock_funcs[idx];
+				} else {
+					lts = linetoscr_ecs_shres_funcs[idx];
+				}
 			}
 		}
 
@@ -5690,7 +5828,14 @@ static void select_lts(void)
 			}
 			int oddeven = denise_max_odd_even;
 			int idx = (oddeven) + (bm * 2) + (planes * 2 * 4) + (spr * 2 * 4 * 4) + (denise_res * 2 * 4 * 4 * 2) + (hresolution * 2 * 4 * 4 * 2 * 2);
-			lts = strlong_emulation ? linetoscr_ecs_ntsc_funcs[idx] : linetoscr_ecs_funcs[idx];
+			if (currprefs.gfx_lores_mode) {
+				lts = strlong_emulation ? linetoscr_ecs_ntsc_funcs_filtered[idx] : linetoscr_ecs_funcs_filtered[idx];
+				if (!lts) {
+					lts = strlong_emulation ? linetoscr_ecs_ntsc_funcs[idx] : linetoscr_ecs_funcs[idx];
+				}
+			} else {
+				lts = strlong_emulation ? linetoscr_ecs_ntsc_funcs[idx] : linetoscr_ecs_funcs[idx];
+			}
 		}
 
 	}
@@ -6039,7 +6184,7 @@ static void lts_unaligned_ecs(int cnt, int cnt_next, int h)
 				if (decode_specials) {
 					pix = decode_denise_specials(pix);
 				}
-				dpix_val = aga_mode ? decode_pixel_aga(pix) : decode_pixel(pix);
+				dpix_val = decode_pixel(pix);
 				gpix = pix;
 				// borderblank starts 1 shres pixel early
 				if (cnt == denise_brdstrt) {
@@ -6295,14 +6440,19 @@ static void pfield_doline_8(int planecnt, int wordcount, uae_u8 *datap, struct l
 	}
 }
 
-static void tvadjust(int *hbstrt_offset, int *hbstop_offset)
+static void tvadjust(int *hbstrt_offset, int *hbstop_offset, struct linestate *ls)
 {
-	if (!programmedmode) {
-		int ww1 = visible_left_start > visible_left_border ? (visible_left_start - visible_left_border) << 0 : 0;
-		int ww2 = visible_right_border > visible_right_stop ? (visible_right_border - visible_right_stop) << 0 : 0;
+	if (!programmedmode && currprefs.gfx_overscanmode < OVERSCANMODE_EXTREME) {
+		int right = denise_strlong_seen ? denise_hblank_extra_right + (1 << currprefs.gfx_resolution) : denise_hblank_extra_right;
+		int ww1 = denise_hblank_extra_left > visible_left_border ? (denise_hblank_extra_left - visible_left_border) << 0 : 0;
+		int ww2 = visible_right_border > right ? (visible_right_border - right) << 0 : 0;
 	
-		*hbstrt_offset -= ww2;
-		*hbstop_offset += ww1;
+		if (hbstrt_offset && ww2 > 0) {
+			*hbstrt_offset -= ww2;
+		}
+		if (hbstop_offset && ww1 > 0) {
+			*hbstop_offset += ww1;
+		}
 	}
 }
 
@@ -6323,9 +6473,61 @@ static int l_shift(int v, int shift)
 	}
 }
 
+static void fill_border(int total, uae_u32 bgcol)
+{
+	if (buf2) {
+		while (total >= 8) {
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+			*buf2++ = bgcol;
+
+			total -= 8;
+		}
+		while (total > 0) {
+			*buf1++ = bgcol;
+			*buf2++ = bgcol;
+			total--;
+		}
+	} else {
+		while (total >= 8) {
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			*buf1++ = bgcol;
+			total -= 8;
+		}
+		while (total > 0) {
+			*buf1++ = bgcol;
+			total--;
+		}
+	}
+}
+
 // draw border from hb to hb
 void draw_denise_border_line_fast(int gfx_ypos, enum nln_how how, struct linestate *ls)
 {
+	if (ls->strlong_seen) {
+		set_strlong();
+	}
+
 	get_line(gfx_ypos, how);
 
 	if (!buf1) {
@@ -6355,7 +6557,7 @@ void draw_denise_border_line_fast(int gfx_ypos, enum nln_how how, struct linesta
 	int hbstrt_offset = ls->hbstrt_offset >> rshift;
 	int hbstop_offset = ls->hbstop_offset >> rshift;
 
-	tvadjust(&hbstrt_offset, &hbstop_offset);
+	tvadjust(&hbstrt_offset, &hbstop_offset, ls);
 
 	int draw_end = ls->internal_pixel_cnt >> rshift;
 	int draw_startoffset = ls->internal_pixel_start_cnt >> rshift;
@@ -6369,57 +6571,18 @@ void draw_denise_border_line_fast(int gfx_ypos, enum nln_how how, struct linesta
 	if (start < hbstop_offset) {
 		int diff = hbstop_offset - start;
 		buf1 += diff;
-		buf2 += diff;
-		gbufp += diff;
+		if (buf2) {
+			buf2 += diff;
+		}
+		if (gbufp) {
+			gbufp += diff;
+		}
 		start = hbstop_offset;
 	}
 	int end = draw_end > hbstrt_offset ? hbstrt_offset : draw_end;
 	int total = end - start;
 
-	if (buf2p) {
-		while (total >= 8) {
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-			*buf2++ = bgcol;
-
-			total -= 8;
-		}
-		while (total > 0) {
-			*buf1++ = bgcol;
-			*buf2++ = bgcol;
-			total--;
-		}
-	} else {
-		while (total >= 8) {
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			*buf1++ = bgcol;
-			total -= 8;
-		}
-		while (total > 0) {
-			*buf1++ = bgcol;
-			total--;
-		}
-	}
+	fill_border(total, bgcol);
 
 	total = end - start;
 	if (need_genlock_data && gbuf && total) {
@@ -6435,6 +6598,10 @@ void draw_denise_border_line_fast(int gfx_ypos, enum nln_how how, struct linesta
 
 void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct linestate *ls)
 {
+	if (ls->strlong_seen) {
+		set_strlong();
+	}
+
 	get_line(gfx_ypos, how);
 
 	if (!buf1) {
@@ -6473,14 +6640,26 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 	if (aga_mode) {
 		if (need_genlock_data) {
 			ltsf = linetoscr_aga_genlock_fast_funcs[ltsidx];
+			if (currprefs.gfx_lores_mode && linetoscr_aga_genlock_fast_funcs_filtered[ltsidx]) {
+				ltsf = linetoscr_aga_genlock_fast_funcs_filtered[ltsidx];
+			}
 		} else {
 			ltsf = linetoscr_aga_fast_funcs[ltsidx];
+			if (currprefs.gfx_lores_mode && linetoscr_aga_fast_funcs_filtered[ltsidx]) {
+				ltsf = linetoscr_aga_fast_funcs_filtered[ltsidx];
+			}
 		}
 	} else {
 		if (need_genlock_data) {
 			ltsf = linetoscr_ecs_genlock_fast_funcs[ltsidx];
+			if (currprefs.gfx_lores_mode && linetoscr_ecs_genlock_fast_funcs_filtered[ltsidx]) {
+				ltsf = linetoscr_ecs_genlock_fast_funcs_filtered[ltsidx];
+			}
 		} else {
 			ltsf = linetoscr_ecs_fast_funcs[ltsidx];
+			if (currprefs.gfx_lores_mode && linetoscr_ecs_fast_funcs_filtered[ltsidx]) {
+				ltsf = linetoscr_ecs_fast_funcs_filtered[ltsidx];
+			}
 		}
 	}
 
@@ -6567,15 +6746,24 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 	int hbstrt_offset = ls->hbstrt_offset >> rshift;
 	int hbstop_offset = ls->hbstop_offset >> rshift;
 
-	tvadjust(&hbstrt_offset, &hbstop_offset);
+	// if HAM: need to clear left hblank after line has been drawn
+	tvadjust(&hbstrt_offset, ham ? NULL : &hbstop_offset, ls);
 
 	// negative checks are needed to handle always-on HDIW
+	int hstop_offset_adjusted = ls->hstop_offset;
+	if (ls->bpl1dat_trigger_offset >= 0) {
+		int bpl_end = ls->bpl1dat_trigger_offset + (1 << RES_MAX) + ls->bpllen * 32;
+		if (hstop_offset_adjusted < 0 || hstop_offset_adjusted > bpl_end) {
+			hstop_offset_adjusted = bpl_end;
+		}
+	}
 	int hstrt_offset = ls->hstrt_offset < 0 || ls->hstop_offset < 0 || (ls->hstrt_offset >> rshift) >= hbstrt_offset ? hbstop_offset : ls->hstrt_offset >> rshift;
-	int hstop_offset = ls->hstop_offset < 0 ? hbstrt_offset : ls->hstop_offset >> rshift;
+	int hstop_offset = hstop_offset_adjusted < 0 || (hstop_offset_adjusted >> rshift) >= hbstrt_offset ? hbstrt_offset : hstop_offset_adjusted >> rshift;
 	int bpl1dat_trigger_offset = (ls->bpl1dat_trigger_offset + (1 << RES_MAX)) >> rshift;
 	int draw_start = 0;
 	int draw_end = ls->internal_pixel_cnt >> rshift;
 	int draw_startoffset = ls->internal_pixel_start_cnt >> rshift;
+
 
 	//write_log("%03d %03d %03d %03d %03d %03d %03d\n", vpos, hbstop_offset, hbstrt_offset, hstrt_offset, hstop_offset, bpl1dat_trigger_offset, delayoffset);
 
@@ -6622,6 +6810,27 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 	
 	ltsf(draw_start, draw_end, draw_startoffset, hbstrt_offset, hbstop_offset, hstrt_offset, hstop_offset, bpl1dat_trigger_offset,
 		planecnt, bgcol, cp, cp2, cpadd, cpadds, bufadd, ls);
+
+#if 0
+	*buf1++ = 0;
+	*buf1++ = 0;
+	*buf2++ = 0;
+	*buf2++ = 0;
+#endif
+
+	if (!programmedmode && ham) {
+		int ww1 = visible_left_start > visible_left_border ? (visible_left_start - visible_left_border) << 0 : 0;
+		if (ww1 > 0) {
+			hbstop_offset += ww1;
+			int w = hbstop_offset - draw_startoffset - (1 << hresolution);
+			if (w > 0) {
+				memset(buf1p, DEBUG_TVOVERSCAN_H_GRAYSCALE, w * sizeof(uae_u32));
+				if (buf2p) {
+					memset(buf2p, DEBUG_TVOVERSCAN_H_GRAYSCALE, w * sizeof(uae_u32));
+				}
+			}
+		}
+	}
 
 	// clear some more bytes to clear possible lightpen cursor graphics
 	if (need_genlock_data && gbuf) {
@@ -6804,17 +7013,20 @@ static void updatelinedata(void)
 	this_line->linear_vpos = linear_vpos;
 }
 
+static bool waitqueue_nolock(void)
+{
+	while (((rga_queue_write + 1) & DENISE_RGA_SLOT_CHUNKS_MASK) == (rga_queue_read & DENISE_RGA_SLOT_CHUNKS_MASK)) {
+		uae_sem_trywait_delay(&read_sem, 500);
+	}
+	return true;
+}
 static bool waitqueue(void)
 {
 	if (!thread_debug_lock) {
 		write_log("Denise queue without lock!\n");
 		return false;
 	}
-
-
-	while (((rga_queue_write + 1) & DENISE_RGA_SLOT_CHUNKS_MASK) == (rga_queue_read & DENISE_RGA_SLOT_CHUNKS_MASK)) {
-		uae_sem_trywait_delay(&read_sem, 500);
-	}
+	waitqueue_nolock();
 	return true;
 }
 static void addtowritequeue(void)
@@ -6929,7 +7141,7 @@ void denise_handle_quick_strobe_queue(uae_u16 strobe, int strobe_pos, int endpos
 	}
 }
 
-void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int startpos, int endpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lof, bool lol, struct linestate *ls)
+void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int startpos, int endpos, int total, int skip, int skip2, int dtotal, int calib_start, int calib_len, bool lof, bool lol, int hdelay, struct linestate *ls)
 {
 	if (MULTITHREADED_DENISE) {
 
@@ -6954,6 +7166,7 @@ void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int star
 		q->lol = lol;
 		q->ls = ls;
 		q->vpos = vpos;
+		q->hdelay = hdelay;
 		q->linear_vpos = linear_vpos;
 
 		addtowritequeue();
@@ -6961,7 +7174,7 @@ void draw_denise_line_queue(int gfx_ypos, nln_how how, uae_u32 linecnt, int star
 	} else {
 
 		updatelinedata();
-		draw_denise_line(gfx_ypos, how, linecnt, startpos, total, skip, skip2, dtotal, calib_start, calib_len, lol, ls);
+		draw_denise_line(gfx_ypos, how, linecnt, startpos, total, skip, skip2, dtotal, calib_start, calib_len, lol, hdelay, ls);
 		update_overlapped_cycles(endpos);
 
 	}
@@ -6986,6 +7199,31 @@ void draw_denise_vsync_queue(int erase)
 	
 		updatelinedata();
 		draw_denise_vsync(erase);
+
+	}
+}
+
+void denise_update_reg_queue(uae_u16 reg, uae_u16 v, uae_u32 linecnt)
+{
+	if (MULTITHREADED_DENISE) {
+
+		if (!waitqueue_nolock()) {
+			return;
+		}
+		struct denise_rga_queue *q = &rga_queue[rga_queue_write & DENISE_RGA_SLOT_CHUNKS_MASK];
+		q->type = 6;
+		q->vpos = vpos;
+		q->linear_vpos = linear_vpos;
+		q->reg = reg;
+		q->val = v;
+		q->linecnt = linecnt;
+
+		addtowritequeue();
+
+	} else {
+
+		updatelinedata();
+		denise_update_reg(reg, v, linecnt);
 
 	}
 }
