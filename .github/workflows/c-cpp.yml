@@ -479,7 +479,7 @@ jobs:
           path: amiberry-*.zip
 
   create-release:
-    needs: [build-macOS-x86_64, build-macOS-Apple-Silicon, build-fedora-x86_64, build-ubuntu-24-amd64, build-ubuntu-22-amd64, build-ubuntu-20-amd64, build-debian-bookworm-amd64, build-debian-bookworm-arm64, build-debian-bookworm-armhf, build-debian-bullseye-amd64, build-debian-bullseye-arm64, build-debian-bullseye-armhf]
+    needs: [build-macOS-x86_64, build-macOS-Apple-Silicon, build-fedora-x86_64, build-ubuntu-24-amd64, build-ubuntu-22-amd64, build-debian-bookworm-amd64, build-debian-bookworm-arm64, build-debian-bookworm-armhf, build-debian-bullseye-amd64, build-debian-bullseye-arm64, build-debian-bullseye-armhf]
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     steps:
@@ -514,7 +514,7 @@ jobs:
             artifacts/Amiberry-*.*
 
   create-prerelease:
-    needs: [build-macOS-x86_64, build-macOS-Apple-Silicon, build-fedora-x86_64, build-ubuntu-24-amd64, build-ubuntu-22-amd64, build-ubuntu-20-amd64,build-debian-bookworm-amd64, build-debian-bookworm-arm64, build-debian-bookworm-armhf, build-debian-bullseye-amd64, build-debian-bullseye-arm64, build-debian-bullseye-armhf]
+    needs: [build-macOS-x86_64, build-macOS-Apple-Silicon, build-fedora-x86_64, build-ubuntu-24-amd64, build-ubuntu-22-amd64, build-debian-bookworm-amd64, build-debian-bookworm-arm64, build-debian-bookworm-armhf, build-debian-bullseye-amd64, build-debian-bullseye-arm64, build-debian-bullseye-armhf]
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'preview-v')
     steps:
