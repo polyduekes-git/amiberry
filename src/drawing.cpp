@@ -3529,6 +3529,8 @@ static void hstart_new(void)
 		}
 		sprites_hidden = sprites_hidden2;
 		bplshiftcnt[0] = bplshiftcnt[1] = 0;
+		last_bpl_pix = 0;
+		setlasthamcolor();
 #ifdef DEBUGGER
 		if (debug_dma) {
 			record_dma_event_denise(debug_dma_ptr, denise_cycle_half, DENISE_EVENT_BPL1DAT_HDIW, false);
@@ -4581,12 +4583,14 @@ static void do_phbstop_ecs(int cnt)
 
 static void do_hstrt_aga(int cnt)
 {
+	if (!denise_hdiw) {
+		sprites_hidden2 &= ~1;
+		sprites_hidden = sprites_hidden2;
+		last_bpl_pix = 0;
+		setlasthamcolor();
+	}
 	denise_hdiw = true;
 	hstrt_offset = internal_pixel_cnt;
-	sprites_hidden2 &= ~1;
-	sprites_hidden = sprites_hidden2;
-	last_bpl_pix = 0;
-	setlasthamcolor();
 	if (internal_pixel_cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
 		diwfirstword_total = internal_pixel_cnt;
 	}
@@ -4613,12 +4617,14 @@ static void do_hstop_aga(int cnt)
 }
 static void do_hstrt_ecs(int cnt)
 {
+	if (!denise_hdiw) {
+		sprites_hidden2 &= ~1;
+		sprites_hidden = sprites_hidden2;
+		last_bpl_pix = 0;
+		setlasthamcolor();
+	}
 	hstrt_offset = internal_pixel_cnt;
 	denise_hdiw = true;
-	sprites_hidden2 &= ~1;
-	sprites_hidden = sprites_hidden2;
-	last_bpl_pix = 0;
-	setlasthamcolor();
 	if (internal_pixel_cnt < diwfirstword_total && bpl1dat_trigger_offset >= 0) {
 		diwfirstword_total = internal_pixel_cnt;
 	}
@@ -5493,6 +5499,7 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 	internal_pixel_start_cnt = 0;
 
 	bool blankedline = (this_line->linear_vpos >= denise_vblank_extra_bottom || this_line->linear_vpos < denise_vblank_extra_top) && currprefs.gfx_overscanmode < OVERSCANMODE_EXTREME && !programmedmode;
+	bool line_is_blanked = false;
 
 	uae_u32 *buf1t = buf1;
 	uae_u32 *buf2t = buf2;
@@ -5503,6 +5510,7 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 
 		// don't draw vertical blanking if not ultra extreme overscan
 		internal_pixel_cnt = -1;
+		line_is_blanked = true;
 		while (denise_cck < denise_total) {
 			while (denise_cck < denise_total) {
 				do_denise_cck(denise_linecnt, denise_startpos, denise_cck);
@@ -5542,6 +5550,7 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 						denise_hcounter_next &= 511;
 					}
 				}
+				denise_pixtotal++;
 				denise_hcounter = denise_hcounter_new;
 				denise_cck++;
 			}
