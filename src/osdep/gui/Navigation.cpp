@@ -152,12 +152,11 @@ static NavigationMap nav_map[] =
 	{ "optFullECS", "Chipset", "chkNTSC", "optECSAgnus", "chkCycleExact" },
 	{ "chkCycleExact", "Chipset", "chkMultithreadedDrawing", "optFullECS", "chkMemoryCycleExact" },
 	{ "chkMemoryCycleExact", "Chipset", "chkMultithreadedDrawing", "chkCycleExact", "cboChipset" },
-	{ "optAGA", "optOCS", "chkSubpixelEmu", "optCollFull", "optECSDenise" },
+	{ "optAGA", "optOCS", "chkBlitImmed", "optCollFull", "optECSDenise" },
 	{ "optECSDenise", "optECSAgnus", "optBlitImmed", "optAGA", "chkNTSC" },
 	{ "chkNTSC", "Chipset", "chkBlitWait", "optECSDenise", "chkCycleExact" },
 	{ "cboChipset", "chkMemoryCycleExact", "cboSpecialMonitors", "", "" },
-	{ "chkSubpixelEmu", "optAGA", "Chipset", "optCollFull", "chkBlitImmed" },
-	{ "chkBlitImmed", "optAGA", "Chipset", "chkSubpixelEmu", "chkBlitWait" },
+	{ "chkBlitImmed", "optAGA", "Chipset", "optCollFull", "chkBlitWait" },
 	{ "chkBlitWait", "chkNTSC", "Chipset", "chkBlitImmed", "chkMultithreadedDrawing" },
 	{ "chkMultithreadedDrawing", "chkCycleExact", "Chipset", "chkBlitWait", "cboSpecialMonitors" },
 	{ "cboSpecialMonitors", "cboChipset", "cboKeyboardOptions", "", "" },
@@ -168,7 +167,7 @@ static NavigationMap nav_map[] =
 	{ "optCollNone", "Chipset", "optCollPlayfield", "chkKeyboardNKRO", "optCollSprites" },
 	{ "optCollSprites", "Chipset", "optCollFull", "optCollNone", "optOCS" },
 	{ "optCollPlayfield", "optCollNone", "Chipset", "optCollSprites", "optCollFull" },
-	{ "optCollFull", "optCollSprites", "Chipset", "optCollPlayfield", "chkSubpixelEmu" },
+	{ "optCollFull", "optCollSprites", "Chipset", "optCollPlayfield", "chkBlitImmed" },
 
 	//  active            move left         move right        move up           move down
 	// PanelROM
