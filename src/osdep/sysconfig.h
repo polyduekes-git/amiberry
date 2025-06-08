@@ -154,8 +154,6 @@
 #define A_DMS
 #define A_WRP
 
-#define UAE_RAND_MAX RAND_MAX
-
 #ifndef GFXFILTER
 #undef OPENGL
 #undef D3D
