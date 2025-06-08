@@ -398,7 +398,8 @@ static LINETOSRC_FUNC lts;
 static bool lts_changed, lts_request;
 typedef void (*LINETOSRC_FUNCF)(int,int,int,int,int,int,int,int,int,uae_u32,uae_u8*,uae_u8*,int,int*,int,struct linestate*);
 
-static int denise_hcounter, denise_hcounter_next, denise_hcounter_new, denise_hcounter_prev;
+static int denise_hcounter, denise_hcounter_next, denise_hcounter_new, denise_hcounter_prev, denise_hcounter_cmp;
+static bool denise_accurate_mode;
 static uae_u32 bplxdat[MAX_PLANES], bplxdat2[MAX_PLANES], bplxdat3[MAX_PLANES];
 static uae_u64 bplxdat_64[MAX_PLANES], bplxdat2_64[MAX_PLANES], bplxdat3_64[MAX_PLANES];
 static uae_u16 bplcon0_denise, bplcon1_denise, bplcon2_denise, bplcon3_denise, bplcon4_denise;
@@ -900,21 +901,21 @@ int get_custom_limits(int *pw, int *ph, int *pdx, int *pdy, int *prealh, int *hr
 
 	if (interlace_seen) {
 		for (;;) {
-			// if more than 1 long or short frames only: accept it, we may have double (non field) mode.
-			if (interlace_lof[0] >= 2 || interlace_lof[1] >= 2) {
-				break;
+			if (!currprefs.gfx_iscanlines) {
+				// if more than 1 long or short frames only: accept it, we may have double (non field) mode.
+				if (interlace_lof[0] >= 2 || interlace_lof[1] >= 2) {
+					break;
+				}
 			}
 			// wait for long frame
 			if (interlace_lof[0] && interlace_lof[1]) {
 				if (!lof_display) {
 					return ret;
 				}
+				break;
 			}
-			interlace_count++;
 			interlace_lof[lof_display]++;
-			if (interlace_count < 3) {
-				return ret;
-			}
+			return ret;
 		}
 	} else {
 		interlace_count = 0;
@@ -2260,6 +2261,7 @@ void vsync_handle_redraw(int long_field, uae_u16 bplcon0p, uae_u16 bplcon3p, boo
 	}
 
 	gui_flicker_led(-1, 0, 0);
+	denise_accurate_mode = currprefs.cpu_memory_cycle_exact || currprefs.cs_optimizations >= DISPLAY_OPTIMIZATIONS_PARTIAL || (currprefs.cpu_model <= 68020 && currprefs.m68k_speed >= 0 && currprefs.cpu_compatible);
 }
 
 static int  dummy_lock(struct vidbuf_description *gfxinfo, struct vidbuffer *vb)
@@ -2446,7 +2448,7 @@ static void setup_brdblank(void)
 {
 	denise_brdstrt_unalign = false;
 	denise_brdstop_unalign = false;
-	if (aga_mode && currprefs.gfx_resolution == RES_SUPERHIRES && borderblank) {
+	if (aga_mode && currprefs.gfx_resolution == RES_SUPERHIRES && borderblank && denise_accurate_mode) {
 		denise_brdstrt = denise_hstop - 1;
 		denise_brdstop = denise_hstrt - 1;
 		denise_brdstrt_lores = denise_brdstrt >> 2;
@@ -2856,8 +2858,8 @@ static void update_bplcon1(void)
 	int bplcon1_hr[2];
 	int delay1 = (bplcon1_denise & 0x0f) | ((bplcon1_denise & 0x0c00) >> 6);
 	int delay2 = ((bplcon1_denise >> 4) & 0x0f) | (((bplcon1_denise >> 4) & 0x0c00) >> 6);
-	bool wasoddeven = bplcon1_shift[0] != bplcon1_shift[1];
 	int mask = 3 >> hresolution;
+	bool wasoddeven = bplcon1_shift_full[0] != bplcon1_shift_full[1];
 
 	bplcon1_shift_mask = fetchmode_mask_denise >> denise_res;
 
@@ -2883,7 +2885,7 @@ static void update_bplcon1(void)
 	bplcon1_shift_full_masked[0] = bplcon1_shift_full[0] & ~bplcon1_hr_mask;
 	bplcon1_shift_full_masked[1] = bplcon1_shift_full[1] & ~bplcon1_hr_mask;
 
-	if (wasoddeven != (bplcon1_shift[0] != bplcon1_shift[1])) {
+	if (wasoddeven != (bplcon1_shift_full[0] != bplcon1_shift_full[1])) {
 		lts_request = true;
 	}
 }
@@ -4469,6 +4471,10 @@ static void do_hb(void)
 
 static void do_hbstrt(int cnt)
 {
+	// move denise hcounter used to match BPLCON1 reset in HB start to hide the glitch in right edge
+	if (!denise_accurate_mode) {
+		denise_hcounter_cmp = denise_hcounter;
+	}
 	denise_hblank = true;
 	if (!exthblankon_ecs) {
 		hbstrt_offset = internal_pixel_cnt;
@@ -4710,6 +4716,7 @@ static void denise_handle_quick_strobe(uae_u16 strobe, int offset, int vpos)
 	denise_hcounter_new += maxhpos * 2;
 	denise_hcounter_new &= 511;
 	denise_hcounter = denise_hcounter_new;
+	denise_hcounter_cmp = denise_hcounter;
 
 	//write_log("%d %04x %d %d\n", vpos, strobe, offset, denise_hcounter_new);
 
@@ -4718,6 +4725,7 @@ static void denise_handle_quick_strobe(uae_u16 strobe, int offset, int vpos)
 		// 3 = refresh offset, 2 = pipeline delay
 		denise_hcounter_new = (offset - 3 - 2) * 2 + 2;
 		denise_hcounter = denise_hcounter_new;
+		denise_hcounter_cmp = denise_hcounter;
 		check_fast_hb();
 	}
 }
@@ -5321,6 +5329,8 @@ static void lts_null(void)
 #ifdef DEBUGGER
 			*debug_dma_dhpos_odd = denise_hcounter;
 #endif
+			denise_hcounter_cmp++;
+			denise_hcounter_cmp &= 511;
 			denise_hcounter++;
 			denise_hcounter &= 511;
 			denise_hcounter_next++;
@@ -5331,6 +5341,9 @@ static void lts_null(void)
 			internal_pixel_start_cnt = internal_pixel_cnt;
 		}
 		denise_hcounter = denise_hcounter_new;
+		if (denise_accurate_mode) {
+			denise_hcounter_cmp = denise_hcounter;
+		}
 		denise_cck++;
 	}
 }
@@ -5508,6 +5521,9 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 
 	if (startcycle == 0) {
 		get_line(gfx_ypos, how);
+
+		//write_log("# %d %d\n", gfx_ypos, vpos);
+
 		denise_hcounter_prev = -1;
 		hbstrt_offset = -1;
 		hbstop_offset = -1;
@@ -5548,6 +5564,8 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 #ifdef DEBUGGER
 						*debug_dma_dhpos_odd = denise_hcounter;
 #endif
+						denise_hcounter_cmp++;
+						denise_hcounter_cmp &= 511;
 						denise_hcounter++;
 						denise_hcounter &= 511;
 						denise_hcounter_next++;
@@ -5564,6 +5582,7 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 #ifdef DEBUGGER
 						*debug_dma_dhpos_odd = denise_hcounter;
 #endif
+						denise_hcounter_cmp++;
 						denise_hcounter++;
 						denise_hcounter &= 511;
 						denise_hcounter_next++;
@@ -5572,6 +5591,9 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 				}
 				denise_pixtotal++;
 				denise_hcounter = denise_hcounter_new;
+				if (denise_accurate_mode) {
+					denise_hcounter_cmp = denise_hcounter;
+				}
 				denise_cck++;
 			}
 			lts_changed = false;
@@ -5599,6 +5621,8 @@ static void draw_denise_line(int gfx_ypos, enum nln_how how, uae_u32 linecnt, in
 		if (denise_spr_nr_armed) {
 			spr_nearest();
 		}
+
+		//write_log("- %d\n", vpos);
 
 		while (denise_cck < denise_endcycle) {
 			lts();
@@ -5823,7 +5847,7 @@ static void select_lts(void)
 	if (denise_max_planes == 7 && bm == CMODE_HAM) {
 		denise_max_planes = 6;
 	}
-	denise_odd_even = bplcon1_shift[0] != bplcon1_shift[1];
+	denise_odd_even = bplcon1_shift_full[0] != bplcon1_shift_full[1];
 	if (denise_odd_even) {
 		denise_max_odd_even = denise_odd_even;
 	}
@@ -6044,7 +6068,7 @@ static void lts_unaligned_aga(int cnt, int cnt_next, int h)
 		uae_u8 gpix = 0xff;
 		if (!denise_blank_active) {
 			// borderblank ends 1 shres pixel early
-			dpix_val = cnt == denise_brdstop && denise_hdiw && bpl1dat_trigger && !denise_vblank_active ? denise_colors.acolors[0] : bordercolor;
+			dpix_val = cnt == denise_brdstop && (denise_hdiw || cnt + 1 == denise_hstrt) ? denise_colors.acolors[0] : bordercolor;
 			gpix = 0;
 			if (denise_hdiw && bpl1dat_trigger) {
 				pix = loaded_pixs[ipix];
@@ -6183,6 +6207,8 @@ static void lts_unaligned_aga(int cnt, int cnt_next, int h)
 	*debug_dma_dhpos_odd = denise_hcounter;
 #endif
 
+	denise_hcounter_cmp++;
+	denise_hcounter_cmp &= 511;
 	denise_hcounter++;
 	denise_hcounter &= 511;
 	denise_hcounter_next++;
@@ -6264,7 +6290,7 @@ static void lts_unaligned_ecs(int cnt, int cnt_next, int h)
 		uae_u8 gpix = 0xff;
 		if (!denise_blank_active) {
 			// borderblank ends 1 shres pixel early
-			dpix_val = cnt == denise_brdstop ? denise_colors.acolors[0] : bordercolor;
+			dpix_val = cnt == denise_brdstop && (denise_hdiw || cnt + 1 == denise_hstrt) ? denise_colors.acolors[0] : bordercolor;
 			gpix = 0;
 			if (denise_hdiw && bpl1dat_trigger) {
 				pix = getbpl6();
@@ -6369,7 +6395,7 @@ static void lts_unaligned_ecs(int cnt, int cnt_next, int h)
 		internal_pixel_cnt++;
 	}
 
-	int dhv = denise_hcounter & bplcon1_shift_mask;
+	int dhv = denise_hcounter_cmp & bplcon1_shift_mask;
 	if (bplcon1_shift[0] == bplcon1_shift[1]) {
 		// both even and odd planes copy
 		if (bpldat_copy[0] && dhv == bplcon1_shift[0]) {
@@ -6392,6 +6418,7 @@ static void lts_unaligned_ecs(int cnt, int cnt_next, int h)
 	*debug_dma_dhpos_odd = denise_hcounter;
 #endif
 
+	denise_hcounter_cmp++;
 	denise_hcounter++;
 	denise_hcounter &= 511;
 	denise_hcounter_next++;
@@ -6707,6 +6734,8 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 	}
 
 	get_line(gfx_ypos, how);
+	
+	//write_log("* %d %d\n", gfx_ypos, vpos);
 
 	if (!buf1 && !ls->blankedline && denise_planes > 0) {
 		resolution_count[denise_res]++;

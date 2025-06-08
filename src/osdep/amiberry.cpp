@@ -93,6 +93,7 @@ int log_net;
 int log_vsync, debug_vsync_min_delay, debug_vsync_forced_delay;
 int uaelib_debug;
 int pissoff_value = 15000 * CYCLE_UNIT;
+int pissoff_nojit_value = 160 * CYCLE_UNIT;
 int multithread_enabled = 1;
 
 static TCHAR* inipath = nullptr;
