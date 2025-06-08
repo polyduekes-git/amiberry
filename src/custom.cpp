@@ -6698,7 +6698,7 @@ void custom_reset(bool hardreset, bool keyboardreset)
 
 	agnus_hpos_next = -1;
 	agnus_vpos_next = -1;
-	agnus_pos_change = 0;
+	agnus_pos_change = -2;
 	hsync_counter = 0;
 	vsync_counter = 0;
 	display_vsync_counter = 0;
@@ -6709,10 +6709,7 @@ void custom_reset(bool hardreset, bool keyboardreset)
 
 	agnus_hpos = 0;
 	agnus_hpos_prev = 0;
-	agnus_hpos_next = 1;
-	agnus_vpos_next = 0;
 	vpos_prev = 0;
-	agnus_pos_change = -2;
 	vpos_lpen = -1;
 
 	uhres_state = 0;
@@ -6783,7 +6780,6 @@ void custom_reset(bool hardreset, bool keyboardreset)
 			sprhstop = 0xffff;
 			sprhstrt = 0xffff;
 
-#if 0
 			for (int i = 0; i < 32; i++) {
 				uae_u16 c;
 				if (i == 0) {
@@ -6816,7 +6812,7 @@ void custom_reset(bool hardreset, bool keyboardreset)
 				}
 #endif
 			}
-#endif
+
 			lof_store = lof_display = 0;
 		}
 

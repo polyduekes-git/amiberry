@@ -8895,9 +8895,9 @@ static void buildin_default_prefs (struct uae_prefs *p)
 	p->m68k_speed = 0;
 	p->cpu_compatible = true;
 	p->address_space_24 = true;
-	p->cpu_cycle_exact = false;
-	p->cpu_memory_cycle_exact = false;
-	p->blitter_cycle_exact = false;
+	p->cpu_cycle_exact = true;
+	p->cpu_memory_cycle_exact = true;
+	p->blitter_cycle_exact = true;
 	p->chipset_mask = CSMASK_ECS_AGNUS;
 	p->immediate_blits = false;
 	p->waiting_blits = 0;
