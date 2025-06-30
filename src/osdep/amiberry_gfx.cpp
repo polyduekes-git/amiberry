@@ -183,7 +183,7 @@ static bool ar_is_exact(const SDL_DisplayMode* mode, const int width, const int 
 // 0: Nearest Neighbor
 // 1: Linear
 // 2: Integer Scaling (this uses Nearest Neighbor)
-static void set_scaling_option(const int monid, const uae_prefs* p, const int width, const int height)
+void set_scaling_option(const int monid, const uae_prefs* p, const int width, const int height)
 {
 	if (p->scaling_method == -1)
 	{
@@ -2858,7 +2858,7 @@ float target_getcurrentvblankrate(const int monid)
 	float vb;
 	if (currprefs.gfx_variable_sync)
 		return static_cast<float>(mon->currentmode.freq);
-	if (get_display_vblank_params(-1, nullptr, nullptr, &vb, nullptr)) {
+	if (get_display_vblank_params(0, nullptr, nullptr, &vb, nullptr)) {
 		return vb;
 	}
 

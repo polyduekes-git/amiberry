@@ -232,7 +232,7 @@ static void set_library_globals(void *dl)
     address = dl_symbol(dl, "uni_uae_version");
     if (address) *((uni_uae_version_function *) address) = &uni_uae_version;
 
-#ifdef AMIBERRY    
+#ifdef AMIBERRY
     address = dl_symbol(dl, "uni_get_context");
     if (address) *((uni_get_context_function *) address) = &uni_get_context;
     
@@ -247,7 +247,7 @@ static void set_library_globals(void *dl)
     
     address = dl_symbol(dl, "write_log");
     if (address) *((write_log_function *) address) = &write_log;
-#endif    
+#endif
 }
 
 static uae_u32 open_library (const char *name, uae_u32 min_version)

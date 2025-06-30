@@ -822,7 +822,7 @@ static void setupcursor()
 	if (rbc->rtgmem_type >= GFXBOARD_HARDWARE)
 		return;
 
-	gfx_lock ();
+	//gfx_lock ();
 	setupcursor_needed = 1;
 	if (cursordata && cursorwidth && cursorheight) {
 		p96_cursor_surface = SDL_CreateRGBSurfaceWithFormat(0, cursorwidth, cursorheight, 32, SDL_PIXELFORMAT_BGR888);
@@ -856,7 +856,7 @@ static void setupcursor()
 	} else {
 		P96TRACE_SPR((_T("cursorsurfaced3d LockRect() failed %08x\n"), hr));
 	}
-	gfx_unlock ();
+	//gfx_unlock ();
 #else
 	uae_u8 *dptr;
 	int bpp = 4;

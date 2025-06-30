@@ -462,8 +462,8 @@ int sleep_millis(const int ms)
 
 static void setcursor(AmigaMonitor* mon, int oldx, int oldy)
 {
-	const int dx = (mon->amigawinclip_rect.x - mon->amigawin_rect.x) + (mon->amigawinclip_rect.w) / 2;
-	const int dy = (mon->amigawinclip_rect.y - mon->amigawin_rect.y) + (mon->amigawinclip_rect.h) / 2;
+	const int dx = (mon->amigawinclip_rect.x - mon->amigawin_rect.x) + ((mon->amigawinclip_rect.x + mon->amigawinclip_rect.w) - mon->amigawinclip_rect.x) / 2;
+	const int dy = (mon->amigawinclip_rect.y - mon->amigawin_rect.y) + ((mon->amigawinclip_rect.y + mon->amigawinclip_rect.h) - mon->amigawinclip_rect.y) / 2;
 	mon->mouseposx = oldx - dx;
 	mon->mouseposy = oldy - dy;
 
@@ -485,14 +485,14 @@ static void setcursor(AmigaMonitor* mon, int oldx, int oldy)
 	}
 	mon->mouseposx = mon->mouseposy = 0;
 	if (oldx < 0 || oldy < 0 || oldx > mon->amigawin_rect.w || oldy > mon->amigawin_rect.h) {
-		write_log("Mouse out of range: mon=%d %dx%d (%dx%d %dx%d)\n", mon->monitor_id, oldx, oldy,
+		write_log(_T("Mouse out of range: mon=%d %dx%d (%dx%d %dx%d)\n"), mon->monitor_id, oldx, oldy,
 			mon->amigawin_rect.x, mon->amigawin_rect.y, mon->amigawin_rect.w, mon->amigawin_rect.h);
 		return;
 	}
 	const int cx = mon->amigawinclip_rect.w / 2 + mon->amigawin_rect.x + (mon->amigawinclip_rect.x - mon->amigawin_rect.x);
 	const int cy = mon->amigawinclip_rect.h / 2 + mon->amigawin_rect.y + (mon->amigawinclip_rect.y - mon->amigawin_rect.y);
 
-	SDL_WarpMouseInWindow(nullptr, cx, cy);
+	SDL_WarpMouseGlobal(cx, cy);
 }
 
 static int mon_cursorclipped;
@@ -1666,6 +1666,15 @@ static void handle_key_event(const SDL_Event& event)
 	int scancode = event.key.keysym.scancode;
 	const auto pressed = event.key.state;
 
+	if (key_swap_hack == 1) {
+		if (scancode == SDL_SCANCODE_F11) {
+			scancode = SDL_SCANCODE_EQUALS;
+		}
+		else if (scancode == SDL_SCANCODE_EQUALS) {
+			scancode = SDL_SCANCODE_F11;
+		}
+	}
+
 	if ((amiberry_options.rctrl_as_ramiga || currprefs.right_control_is_right_win_key) && scancode == SDL_SCANCODE_RCTRL)
 	{
 		scancode = SDL_SCANCODE_RGUI;
@@ -2510,7 +2519,7 @@ void target_default_options(uae_prefs* p, const int type)
 	p->drawbridge_serial_auto = true;
 	p->drawbridge_smartspeed = false;
 	p->drawbridge_autocache = false;
-	p->drawbridge_connected_drive_b = false;
+	p->drawbridge_drive_cable = 0;
 	p->drawbridge_driver = 0;
 
 	drawbridge_update_profiles(p);
@@ -2671,7 +2680,7 @@ void target_save_options(zfile* f, uae_prefs* p)
 		cfgfile_target_write_str(f, _T("drawbridge_serial_port"), p->drawbridge_serial_port);
 		cfgfile_target_dwrite_bool(f, _T("drawbridge_smartspeed"), p->drawbridge_smartspeed);
 		cfgfile_target_dwrite_bool(f, _T("drawbridge_autocache"), p->drawbridge_autocache);
-		cfgfile_target_dwrite_bool(f, _T("drawbridge_connected_drive_b"), p->drawbridge_connected_drive_b);
+		cfgfile_target_dwrite(f, _T("drawbridge_drive_cable"), _T("%d"), p->drawbridge_drive_cable);
 	}
 
 	cfgfile_target_dwrite_bool(f, _T("alt_tab_release"), p->alt_tab_release);
@@ -2779,7 +2788,7 @@ static int target_parse_option_host(uae_prefs *p, const TCHAR *option, const TCH
 		|| cfgfile_string(option, value, _T("drawbridge_serial_port"), p->drawbridge_serial_port, sizeof p->drawbridge_serial_port)
 		|| cfgfile_yesno(option, value, _T("drawbridge_smartspeed"), &p->drawbridge_smartspeed)
 		|| cfgfile_yesno(option, value, _T("drawbridge_autocache"), &p->drawbridge_autocache)
-		|| cfgfile_yesno(option, value, _T("drawbridge_connected_drive_b"), &p->drawbridge_connected_drive_b)
+		|| cfgfile_intval(option, value, _T("drawbridge_drive_cable"), &p->drawbridge_drive_cable, 1)
 		|| cfgfile_yesno(option, value, _T("alt_tab_release"), &p->alt_tab_release)
 		|| cfgfile_yesno(option, value, _T("use_retroarch_quit"), &p->use_retroarch_quit)
 		|| cfgfile_yesno(option, value, _T("use_retroarch_menu"), &p->use_retroarch_menu)
@@ -4825,6 +4834,8 @@ static void initialize_ini()
 		regsetint(nullptr, _T("GUIPosY"), y);
 	}
 
+	regqueryint(NULL, _T("KeySwapBackslashF11"), &key_swap_hack);
+
 	read_rom_list(true);
 	load_keyring(nullptr, nullptr);
 }
@@ -4838,16 +4849,21 @@ static void makeverstr(TCHAR* s)
 		}
 		else {
 			_stprintf(BetaStr, _T(" (%sBeta %s, %d.%02d.%02d)"), AMIBERRYPUBLICBETA > 0 ? _T("Public ") : _T(""), AMIBERRYBETA,
+			_sntprintf(BetaStr, sizeof BetaStr, _T(" (DevAlpha %s, %d.%02d.%02d)"), AMIBERRYBETA,
+				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
+		}
+		else {
+			_sntprintf(BetaStr, sizeof BetaStr, _T(" (%sBeta %s, %d.%02d.%02d)"), AMIBERRYPUBLICBETA > 0 ? _T("Public ") : _T(""), AMIBERRYBETA,
 				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
 		}
 #ifdef _WIN64
 		_tcscat(BetaStr, _T(" 64-bit"));
 #endif
-		_stprintf(s, _T("Amiberry %d.%d.%d%s%s"),
+		_sntprintf(s, sizeof VersionStr, _T("Amiberry %d.%d.%d%s%s"),
 			UAEMAJOR, UAEMINOR, UAESUBREV, AMIBERRYREV, BetaStr);
 	}
 	else {
-		_stprintf(s, _T("Amiberry %d.%d.%d%s (%d.%02d.%02d)"),
+		_sntprintf(s, sizeof VersionStr, _T("Amiberry %d.%d.%d%s (%d.%02d.%02d)"),
 			UAEMAJOR, UAEMINOR, UAESUBREV, AMIBERRYREV, GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
 #ifdef _WIN64
 		_tcscat(s, _T(" 64-bit"));
@@ -4861,6 +4877,8 @@ static void makeverstr(TCHAR* s)
 
 int main(int argc, char* argv[])
 {
+	makeverstr(VersionStr);
+
 	for (auto i = 1; i < argc; i++) {
 		if (_tcscmp(argv[i], _T("-h")) == 0 || _tcscmp(argv[i], _T("--help")) == 0)
 			usage();
@@ -5137,10 +5155,15 @@ bool get_plugin_path(TCHAR* out, const int len, const TCHAR* path)
 	return TRUE;
 }
 
+// The serialization logic here is taken from FloppyBridge.cpp -> void BridgeConfig::toString(char** serialisedOptions)
 void drawbridge_update_profiles(uae_prefs* p)
 {
 #ifdef FLOPPYBRIDGE
-	const unsigned int flags = (p->drawbridge_autocache ? 1 : 0) | (p->drawbridge_connected_drive_b & 1) << 1 | (p->drawbridge_serial_auto ? 4 : 0) | (p->drawbridge_smartspeed ? 8 : 0);
+	// sanity check
+	if (p->drawbridge_drive_cable < 0 || p->drawbridge_drive_cable > 5)
+		p->drawbridge_drive_cable = 0;
+
+	const unsigned int flags = (p->drawbridge_autocache ? 1 : 0) | (p->drawbridge_drive_cable & 1) << 1 | (p->drawbridge_drive_cable & 6) << 3 | (p->drawbridge_serial_auto ? 4 : 0) | (p->drawbridge_smartspeed ? 8 : 0);
 
 	const std::string profile_name_normal = "Normal";
 	const std::string profile_name_comp = "Compatible";

@@ -5069,7 +5069,7 @@ void ethernet_updateselection(void)
 				_sntprintf(mac, sizeof mac, _T(" xx:xx:xx:%02X:%02X:%02X"),
 					ndd[i]->mac[3], ndd[i]->mac[4], ndd[i]->mac[5]);
 			}
-			_sntprintf(p1, sizeof p1, _T("%s%s"), ndd[i]->desc, mac[0] ? mac : _T(""));
+			_sntprintf(p1, MAX_DPATH, _T("%s%s"), ndd[i]->desc, mac[0] ? mac : _T(""));
 			p1 += _tcslen(p1) + 1;
 			_tcscpy(p2, ndd[i]->name);
 			p2 += _tcslen(p2) + 1;
@@ -6100,7 +6100,7 @@ const struct expansionromtype expansionroms[] = {
 
 	},
 #endif
-#ifndef NDEBUG
+#ifndef AMIBERRY
 	{
 		_T("dev_ide"), _T("DEV IDE"), NULL,
 		NULL, dev_hd_init, NULL, dev_hd_add_ide_unit, ROMTYPE_DEVHD | ROMTYPE_NONE, 0, 0, BOARD_AUTOCONFIG_Z2, true,
