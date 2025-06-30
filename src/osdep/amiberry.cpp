@@ -4848,11 +4848,6 @@ static void makeverstr(TCHAR* s)
 				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
 		}
 		else {
-			_stprintf(BetaStr, _T(" (%sBeta %s, %d.%02d.%02d)"), AMIBERRYPUBLICBETA > 0 ? _T("Public ") : _T(""), AMIBERRYBETA,
-			_sntprintf(BetaStr, sizeof BetaStr, _T(" (DevAlpha %s, %d.%02d.%02d)"), AMIBERRYBETA,
-				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
-		}
-		else {
 			_sntprintf(BetaStr, sizeof BetaStr, _T(" (%sBeta %s, %d.%02d.%02d)"), AMIBERRYPUBLICBETA > 0 ? _T("Public ") : _T(""), AMIBERRYBETA,
 				GETBDY(AMIBERRYDATE), GETBDM(AMIBERRYDATE), GETBDD(AMIBERRYDATE));
 		}
