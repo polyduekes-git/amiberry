@@ -44,6 +44,7 @@
 #ifdef WITH_SPECIALMONITORS
 #include "specialmonitors.h"
 #endif
+#include "ide.h"
 
 #ifdef AMIBERRY
 #include "amiberry_input.h"
@@ -5200,9 +5201,6 @@ static bool parse_geo (const TCHAR *tname, struct uaedev_config_info *uci, const
 		xfree(out);
 		ret = true;
 	}
-
-	void ata_parse_identity(uae_u8 *out, struct uaedev_config_info *uci, bool *lba, bool *lba48, int *max_multiple);
-	bool ata_get_identity(struct ini_data *ini, uae_u8 *out, bool overwrite);
 
 	uae_u8 ident[512];
 	if (ata_get_identity(ini, ident, true)) {

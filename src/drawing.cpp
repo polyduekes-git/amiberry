@@ -554,7 +554,7 @@ static void count_frame(int monid)
 		ad->framecnt = 1;
 }
 
-STATIC_INLINE int xshift (int x, int shift)
+STATIC_INLINE int xshift(int x, int shift)
 {
 	if (shift < 0)
 		return x >> (-shift);
@@ -562,13 +562,13 @@ STATIC_INLINE int xshift (int x, int shift)
 		return x << shift;
 }
 
-int coord_native_to_amiga_x (int x)
+int coord_native_to_amiga_x(int x)
 {
 	x += visible_left_border;
 	return x;
 }
 
-int coord_native_to_amiga_y (int y)
+int coord_native_to_amiga_y(int y)
 {
 #ifdef AMIBERRY
 	if (!native2amiga_line_map || y < 0)
@@ -3228,12 +3228,13 @@ static void expand_colmask(void)
 		clxcon_bpl_enable2 = 0;
 		clxcon_bpl_match2 = 0;
 	}
+	bool bplalwayson = currprefs.collision_level >= 3 && clxcon_bpl_enable2 == 0;
 	if (clxcon_bpl_enable_o != clxcon_bpl_enable2 || clxcon_bpl_match_o != clxcon_bpl_match2) {
 		for (int i = 0; i < (aga_mode ? 256 : 64); i++) {
 			uae_u8 m = i & clxcon_bpl_enable;
 			uae_u8 odd = m & 0x55;
 			uae_u8 even = m & 0xaa;
-			if ((odd && even) && m == (clxcon_bpl_enable2 & clxcon_bpl_match2)) {
+			if (((odd && even) && m == (clxcon_bpl_enable2 & clxcon_bpl_match2)) || bplalwayson) {
 				bplcoltable[i] = 0x0001;
 			} else {
 				bplcoltable[i] = 0x0000;
@@ -5037,11 +5038,6 @@ void denise_restore_registers(void)
 	expand_fmode(s_fmode);
 }
 
-bool has_draw_denise(void)
-{
-	return thread_debug_lock;
-}
-
 void set_drawbuffer(void)
 {
 	struct vidbuf_description *vidinfo = &adisplays[0].gfxvidinfo;
@@ -5066,11 +5062,11 @@ bool start_draw_denise(void)
 	struct vidbuf_description *vidinfo = &adisplays[0].gfxvidinfo;
 	struct vidbuffer *vb = &vidinfo->drawbuffer;
 
-	vidinfo->outbuffer = vb;
-
 	if (thread_debug_lock) {
-		write_log("start_draw_denise: thread_debug_lock already set!");
+		return true;
 	}
+
+	vidinfo->outbuffer = vb;
 
 	if (!lockscr(vb, false, display_reset > 0)) {
 		return false;
@@ -5094,10 +5090,6 @@ void end_draw_denise(void)
 {
 	struct vidbuf_description *vidinfo = &adisplays[0].gfxvidinfo;
 	struct vidbuffer *vb = &vidinfo->drawbuffer;
-
-	if (!thread_debug_lock) {
-		write_log("end_draw_denise: thread_debug_lock not set!\n");
-	}
 
 	draw_denise_line_queue_flush();
 
@@ -6680,12 +6672,7 @@ void draw_denise_border_line_fast(int gfx_ypos, enum nln_how how, struct linesta
 	bool ecsena = ecs_denise && (ls->bplcon0 & 1) != 0;
 	bool brdblank = (ls->bplcon3 & 0x20) && ecsena;
 
-	uae_u32 bgcol;
-	if (aga_mode) {
-		bgcol = brdblank ? 0x000000 : ls->color0;
-	} else {
-		bgcol = brdblank ? 0x000000 : xcolors[ls->color0];
-	}
+	uae_u32 bgcol = brdblank ? 0x000000 : getxcolor(ls->color0);
 
 	int hbstrt_offset = ls->hbstrt_offset >> rshift;
 	int hbstop_offset = ls->hbstop_offset >> rshift;
@@ -6813,11 +6800,11 @@ void draw_denise_bitplane_line_fast(int gfx_ypos, enum nln_how how, struct lines
 
 	uae_u32 bgcol;
 	if (aga_mode) {
-		bgcol = brdblank ? 0x000000 : ls->color0;
+		bgcol = brdblank ? 0x000000 : getxcolor(ls->color0);
 	} else if (res == 2) {
 		bgcol = brdblank ? 0x000000 : bordercolor_ecs_shres;
 	} else {
-		bgcol = brdblank ? 0x000000 : xcolors[ls->color0];
+		bgcol = brdblank ? 0x000000 : getxcolor(ls->color0);
 	}
 	
 	//bgcol = 0xff00;

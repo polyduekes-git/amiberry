@@ -4823,12 +4823,6 @@ static int do_specialties (int cycles)
 	return 0;
 }
 
-
-uaecptr m68kpc()
-{
-	return m68k_getpc();
-}
-
 //static uae_u32 pcs[1000];
 
 #if DEBUG_CD32CDTVIO
@@ -5419,10 +5413,10 @@ static void run_cpu_thread(int (*f)(void *))
 
 #endif
 
-void custom_reset_cpu(bool hardreset, bool keyboardreset)
+static void custom_reset_cpu(bool hardreset, bool keyboardreset)
 {
 #ifdef WITH_THREADED_CPU
-	if (cpu_thread_tid != uae_thread_get_id(nullptr)) {
+	if (cpu_thread_tid != uae_thread_get_id()) {
 		custom_reset(hardreset, keyboardreset);
 		return;
 	}
@@ -10243,8 +10237,6 @@ void fill_prefetch ()
 		regs.read_buffer = regs.irc;
 	}
 }
-
-extern bool cpuboard_fc_check(uaecptr addr, uae_u32 *v, int size, bool write);
 
 uae_u32 sfc_nommu_get_byte(uaecptr addr)
 {

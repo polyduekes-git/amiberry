@@ -644,7 +644,7 @@ static int display_hstart_fastmode;
 static int color_table_index;
 static bool color_table_changed;
 #define COLOR_TABLE_ENTRIES 2
-static uae_u8 color_tables[COLOR_TABLE_ENTRIES * 256 * sizeof(uae_u32)];
+static uae_u8 color_tables[COLOR_TABLE_ENTRIES * 512 * sizeof(uae_u32)];
 
 #define HSYNCTIME (maxhpos * CYCLE_UNIT)
 
@@ -868,7 +868,7 @@ static void setclr(uae_u16 *p, uae_u16 val)
 // is last display line?
 static bool is_last_line(void)
 {
-	return  vpos == vsync_startline || vpos + 1 == vsync_startline;
+	return  vpos == vsync_startline || (vpos + 1 == vsync_startline && vpos_prev + 1 != vsync_startline - 1);
 }
 
 static void docols(struct color_entry *colentry)
@@ -3049,6 +3049,7 @@ static void COPJMP(int num, int vblank)
 		} else {
 			cop_state.state = COP_strobe_delay_start;
 		}
+		cop_state.strobeip = 0xffffffff;
 	} else {
 		// copper request done for next cycle
 		if (vblank) {
@@ -3327,7 +3328,7 @@ static void intreq_checks(uae_u16 oldreq, uae_u16 newreq)
 	serial_rbf_change((newreq & 0x0800) ? 1 : 0);
 }
 
-void event_doint_delay_do_ext_old(uae_u32 v)
+static void event_doint_delay_do_ext_old(uae_u32 v)
 {
 	uae_u16 old = intreq2;
 	setclr(&intreq, (1 << v) | 0x8000);
@@ -4279,6 +4280,7 @@ static void COLOR_WRITE(uae_u16 v, int num)
 		uae_u32 cval = (cr << 16) | (cg << 8) | cb;
 
 		agnus_colors.color_regs_aga[colreg] = cval;
+		agnus_colors.acolors[colreg] = getxcolor(cval);
 
 	} else {
 
@@ -5059,18 +5061,13 @@ static void vsync_display_render(void)
 		vsyncmintimepre = read_processor_time();
 
 		if (!custom_disabled) {
-			if (!has_draw_denise()) {
-				start_draw_denise();
-			}
+			start_draw_denise();
 			draw_denise_vsync_queue(display_redraw);
 			display_redraw = false;
 		}
 
 		draw_denise_line_queue_flush();
-
-		if (has_draw_denise()) {
-			end_draw_denise();
-		}
+		end_draw_denise();
 		vsync_handler_render();
 		if (!custom_disabled) {
 			start_draw_denise();
@@ -6659,10 +6656,6 @@ void custom_reset(bool hardreset, bool keyboardreset)
 	memory_map_dump();
 #endif
 
-	rga_slot_first_offset = 0;
-	rga_slot_in_offset = 1;
-	rga_slot_out_offset = 2;
-
 	for(int i = 0; i < DENISE_RGA_SLOT_TOTAL; i++) {
 		struct denise_rga *r = &rga_denise[i];
 		memset(r, 0, sizeof(struct denise_rga));
@@ -6757,6 +6750,9 @@ void custom_reset(bool hardreset, bool keyboardreset)
 	}
 
 	if (!savestate_state) {
+		rga_slot_first_offset = 0;
+		rga_slot_in_offset = 1;
+		rga_slot_out_offset = 2;
 		cia_hsync = 0;
 		extra_cycle = 0;
 		currprefs.chipset_mask = changed_prefs.chipset_mask;
@@ -6999,10 +6995,7 @@ void custom_reset(bool hardreset, bool keyboardreset)
 	setmaxhpos();
 	resetfulllinestate();
 	updateprghpostable();
-
-	if (!has_draw_denise()) {
-		start_draw_denise();
-	}
+	start_draw_denise();
 
 #ifdef ACTION_REPLAY
 	/* Doing this here ensures we can use the 'reset' command from within AR */
@@ -7509,6 +7502,9 @@ static int custom_wput_agnus(int addr, uae_u32 value, int noget)
 	case 0x5E: BLTSIZH(hpos, value); break;
 	case 0x1E4: DIWHIGH(value); break;
 
+	case 0x098: CLXCON(value); break;
+	case 0x10e: CLXCON2(value); break;
+
 	case 0x1DC: BEAMCON0(value); break;
 	case 0x1C0:
 		if (htotal != value) {
@@ -7762,6 +7758,9 @@ void restore_custom_start(void)
 	memset(&cop_state, 0, sizeof(cop_state));
 	cop_state.state = COP_stop;
 	denise_reset(true);
+	rga_slot_first_offset = 0;
+	rga_slot_in_offset = 1;
+	rga_slot_out_offset = 2;
 }
 
 #define RB restore_u8()
@@ -8431,6 +8430,9 @@ static uaecptr *getptfromreg(int reg)
 {
 	switch (reg)
 	{
+	case -1:
+	case 0xffff:
+		return NULL;
 	case 0x000:
 		return &blt_info.bltdpt;
 	case 0x070:
@@ -8476,7 +8478,6 @@ static uaecptr *getptfromreg(int reg)
 	}
 	return &dummyrgaaddr;
 }
-
 
 uae_u8 *save_custom_slots(size_t *len, uae_u8 *dstptr)
 {
@@ -8527,6 +8528,8 @@ uae_u8 *save_custom_slots(size_t *len, uae_u8 *dstptr)
 		regidx = getregfrompt(r->conflict);
 		save_u16(regidx);
 	}
+
+	save_u8(rga_slot_first_offset);
 
 	*len = dst - dstbak;
 	return dstbak;
@@ -8579,6 +8582,9 @@ uae_u8 *restore_custom_slots(uae_u8 *src)
 			regidx = restore_u16();
 			r->conflict = getptfromreg(regidx);
 		}
+		rga_slot_first_offset = restore_u8();
+		rga_slot_in_offset = (rga_slot_first_offset + 1) & 3;
+		rga_slot_out_offset = (rga_slot_in_offset + 1) & 3;
 	}
 
 	return src;
@@ -9479,6 +9485,9 @@ static void generate_copper(void)
 		// But it still gets allocated by copper if it is free = CPU and blitter can't use it.
 		if (bus_allocated) {
 			cop_state.state = COP_strobe_delay2;
+			if (cop_state.strobeip == 0xffffffff) {
+				cop_state.strobetype = 1;
+			}
 			cop_state.strobeip = getstrobecopip();
 			cop_state.strobe = 0;
 			cop_state.ignore_next = 0;
@@ -10751,8 +10760,10 @@ static bool draw_line_fast(struct linestate *l, int ldv, uaecptr bplptp[8], bool
 		if (color_table_index >= COLOR_TABLE_ENTRIES) {
 			color_table_index = 0;
 		}
-		l->linecolorstate = color_tables + color_table_index * 256 * sizeof(uae_u32);
+		l->linecolorstate = color_tables + color_table_index * 512 * sizeof(uae_u32);
 		uae_u8 *dpt = l->linecolorstate;
+		memcpy(dpt, agnus_colors.acolors, colors * sizeof(uae_u32));
+		dpt += 256 * sizeof(uae_u32);
 		if (aga_mode) {
 			memcpy(dpt, agnus_colors.color_regs_aga, colors * sizeof(uae_u32));
 		} else {
@@ -10760,7 +10771,7 @@ static bool draw_line_fast(struct linestate *l, int ldv, uaecptr bplptp[8], bool
 		}
 		color_table_changed = false;
 	} else {
-		l->linecolorstate = color_tables + color_table_index * 256 * sizeof(uae_u32);
+		l->linecolorstate = color_tables + color_table_index * 512 * sizeof(uae_u32);
 	}
 
 	l->color0 = aga_mode ? agnus_colors.color_regs_aga[0] : agnus_colors.color_regs_ecs[0];
@@ -10994,9 +11005,7 @@ static void dmal_fast(void)
 
 static void do_draw_line(void)
 {
-	if (!has_draw_denise()) {
-		start_draw_denise();
-	}
+	start_draw_denise();
 
 	if (custom_fastmode_exit) {
 		custom_fastmode_exit = 0;
@@ -11915,8 +11924,6 @@ static void check_hsyncs(void)
 	}
 }
 
-extern void process_blitter(struct rgabuf*);
-
 static void handle_rga_out(void)
 {
 	if (dmal_next) {
@@ -12207,7 +12214,6 @@ static void generate_dma_requests(void)
 	}
 
 	if (blt_info.blit_queued || blitter_delayed_update) {
-		extern void generate_blitter(void);
 		generate_blitter();
 	}
 }
@@ -12740,8 +12746,5 @@ bool ispal(int *lines)
 void custom_end_drawing(void)
 {
 	draw_denise_line_queue_flush();
-	if (has_draw_denise()) {
-		write_log("flushing denise draw queue\n");
-		end_draw_denise();
-	}
+	end_draw_denise();
 }

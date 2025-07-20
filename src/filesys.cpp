@@ -4049,14 +4049,14 @@ static void action_read_link(TrapContext *ctx, Unit *unit, dpacket *packet)
 			}
 		}
 	}
+	if (!a->softlink)
+		err = ERROR_OBJECT_WRONG_TYPE;
 	if (err != 0) {
 		xfree(extrapath);
 		PUT_PCK_RES1 (packet, DOS_FALSE);
 		PUT_PCK_RES2 (packet, err);
 		return;
 	}
-	if (!a->softlink)
-		err = ERROR_OBJECT_WRONG_TYPE;
 	_tcscpy (tmp, a->nname);
 	write_log (_T("Resolving softlink '%s'\n"), tmp);
 	if (!my_resolvesoftlink (tmp, sizeof tmp / sizeof (TCHAR), false)) {
@@ -10619,9 +10619,9 @@ int filesys_shellexecute2(TCHAR *file, TCHAR *currentdir, TCHAR *parms, uae_u32 
 	for (int i = 0; i < SHELLEXEC_MAX; i++) {
 		struct ShellExecute2 *se2 = &shellexecute2[i];
 		if (!se2->state) {
-			se2->file = file ? ua(file) : (char*)"";
-			se2->currentdir = currentdir ? ua(currentdir) : (char*)"";
-			se2->parms = parms ? ua(parms) : (char*)"";
+			se2->file = file ? ua(file) : strdup("");
+			se2->currentdir = currentdir ? ua(currentdir) : strdup("");
+			se2->parms = parms ? ua(parms) : strdup("");
 			se2->id = id;
 			se2->stack = stack;
 			se2->priority = priority;

@@ -1142,7 +1142,7 @@ void cdtv_getdmadata (uae_u32 *acr)
 	*acr = dmac_acr;
 }
 
-static void checkint_cdtv (void)
+static void cdtv_checkint(void)
 {
 	int irq = 0;
 #ifdef A2091
@@ -1160,7 +1160,7 @@ static void checkint_cdtv (void)
 
 void cdtv_scsi_int (void)
 {
-	checkint_cdtv ();
+	cdtv_checkint();
 }
 void cdtv_scsi_clear_int (void)
 {
@@ -1169,7 +1169,7 @@ void cdtv_scsi_clear_int (void)
 
 static void rethink_cdtv (void)
 {
-	checkint_cdtv ();
+	cdtv_checkint();
 	tp_check_interrupts ();
 }
 
@@ -1195,7 +1195,7 @@ static void CDTV_hsync_handler (void)
 		dma_finished = 0;
 		cdtv_hsync = -1;
 	}
-	checkint_cdtv ();
+	cdtv_checkint();
 
 	if (cdrom_command_done) {
 		cdrom_command_done = 0;
@@ -1349,7 +1349,7 @@ static uae_u32 dmac_bget2 (uaecptr addr)
 #ifdef A2091
 		if (cdtvscsi) {
 			v = wdscsi_get (&wd_cdtv->wc, wd_cdtv);
-			checkint_cdtv ();
+			cdtv_checkint();
 		}
 #endif
 		break;
@@ -1454,7 +1454,7 @@ static void dmac_bput2 (uaecptr addr, uae_u32 b)
 #ifdef A2091
 		if (cdtvscsi) {
 			wdscsi_sasr (&wd_cdtv->wc, b);
-			checkint_cdtv ();
+			cdtv_checkint();
 		}
 #endif
 		break;
@@ -1462,7 +1462,7 @@ static void dmac_bput2 (uaecptr addr, uae_u32 b)
 #ifdef A2091
 		if (cdtvscsi) {
 			wdscsi_put (&wd_cdtv->wc, wd_cdtv, b);
-			checkint_cdtv ();
+			cdtv_checkint();
 		}
 #endif
 		break;
@@ -1487,7 +1487,7 @@ static void dmac_bput2 (uaecptr addr, uae_u32 b)
 	case 0xe4:
 	case 0xe5:
 		dmac_istr = 0;
-		checkint_cdtv ();
+		cdtv_checkint();
 		break;
 	case 0xe8:
 	case 0xe9:
