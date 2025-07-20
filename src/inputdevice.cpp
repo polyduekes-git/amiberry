@@ -2026,37 +2026,37 @@ void inputdevice_jportcustom_fixup(struct uae_prefs *p, TCHAR *data, int cnum)
 	int jidtype_forced = -1;
 
 	// if joystick is configured with name/friendlyname + customx: configure customx device index = selected device
-	for(int i = 0; i < MAX_JPORTS; i++) {
-		struct jport *jp = &p->jports[i];
-		for (int j = 0; j < MAX_JPORT_DEVS; j++) {
-			struct jport_dev *jd = &jp->jd[i];
-			if (jd->idc.name[0] || jd->idc.configname[0]) {
-				if (jd->id - JSEM_CUSTOM == cnum) {
-					int dn = 0;
-					for (;;) {
-						struct inputdevice_functions *idf = getidf(dn);
-						if (!idf) {
-							break;
-						}
-						if (gettype(dn) == IDTYPE_JOYSTICK) {
-							int nn = idf->get_num();
-							for (int n = 0; n < nn; n++) {
-								if (jd->idc.name[0] && !_tcscmp(jd->idc.name, idf->get_friendlyname(n))) {
-									jidtype_forced = dn;
-									break;
-								}
-								if (jd->idc.configname[0] && !_tcscmp(jd->idc.configname, idf->get_uniquename(n))) {
-									jidtype_forced = dn;
-									break;
-								}
-							}
-						}
-						dn++;
-					}
-				}
-			}
-		}
-	}
+	// for(int i = 0; i < MAX_JPORTS; i++) {
+	// 	struct jport *jp = &p->jports[i];
+	// 	for (int j = 0; j < MAX_JPORT_DEVS; j++) {
+	// 		struct jport_dev *jd = &jp->jd[i];
+	// 		if (jd->idc.name[0] || jd->idc.configname[0]) {
+	// 			if (jd->id - JSEM_CUSTOM == cnum) {
+	// 				int dn = 0;
+	// 				for (;;) {
+	// 					struct inputdevice_functions *idf = getidf(dn);
+	// 					if (!idf) {
+	// 						break;
+	// 					}
+	// 					if (gettype(dn) == IDTYPE_JOYSTICK) {
+	// 						int nn = idf->get_num();
+	// 						for (int n = 0; n < nn; n++) {
+	// 							if (jd->idc.name[0] && !_tcscmp(jd->idc.name, idf->get_friendlyname(n))) {
+	// 								jidtype_forced = dn;
+	// 								break;
+	// 							}
+	// 							if (jd->idc.configname[0] && !_tcscmp(jd->idc.configname, idf->get_uniquename(n))) {
+	// 								jidtype_forced = dn;
+	// 								break;
+	// 							}
+	// 						}
+	// 					}
+	// 					dn++;
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	TCHAR *bufp = olddata;
 	_tcscat(bufp, _T(" "));

@@ -5416,7 +5416,7 @@ static void run_cpu_thread(int (*f)(void *))
 static void custom_reset_cpu(bool hardreset, bool keyboardreset)
 {
 #ifdef WITH_THREADED_CPU
-	if (cpu_thread_tid != uae_thread_get_id()) {
+	if (cpu_thread_tid != uae_thread_get_id(cpu_thread)) {
 		custom_reset(hardreset, keyboardreset);
 		return;
 	}
