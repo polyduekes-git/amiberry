@@ -41,18 +41,14 @@
 #include "gui.h"
 #include "zfile.h"
 #include "autoconf.h"
-#include "picasso96.h"
 #include "native2amiga.h"
 #include "savestate.h"
-#include "filesys.h"
 #include "blkdev.h"
 #include "consolehook.h"
 #include "gfxboard.h"
 #ifdef WITH_LUA
 #include "luascript.h"
 #endif
-#include "uaenative.h"
-#include "tabletlibrary.h"
 #include "cpuboard.h"
 #ifdef WITH_PPC
 #include "uae/ppc.h"
@@ -77,7 +73,7 @@
 #include "keyboard.h"
 
 // Special version string so that AmigaOS can detect it
-static constexpr char __ver[40] = "$VER: Amiberry v7.1.0 (2025-07-09)";
+static constexpr char __ver[40] = "$VER: Amiberry v8.0.0 (2025-09-05)";
 
 long int version = 256 * 65536L * UAEMAJOR + 65536L * UAEMINOR + UAESUBREV;
 
@@ -324,7 +320,7 @@ void fixup_cpu (struct uae_prefs *p)
 		p->cachesize = 0;
 		error_log (_T("JIT requires 68020 or better CPU."));
 	}
-	if (p->fpu_model == 0 && p->compfpu) {
+	if ((p->fpu_model == 0 || !p->cachesize) && p->compfpu) {
 		p->compfpu = false;
 	}
 
@@ -551,7 +547,6 @@ void fixup_prefs (struct uae_prefs *p, bool userconfig)
 			error_log(_T("You can't use Zorro II RTG and more than 2MB chip at the same time."));
 			p->chipmem.size = 0x200000;
 		}
-#ifndef AMIBERRY // custom gfx boards not implemented yet
 		if (rbc->rtgmem_type >= GFXBOARD_HARDWARE) {
 			if (gfxboard_get_vram_min(rbc) > 0 && rbc->rtgmem_size < gfxboard_get_vram_min (rbc)) {
 				error_log(_T("Graphics card memory size %d (0x%x) smaller than minimum hardware supported %d (0x%x)."),
@@ -569,7 +564,6 @@ void fixup_prefs (struct uae_prefs *p, bool userconfig)
 				rbc->rtgmem_size = gfxboard_get_vram_max(rbc);
 			}
 		}
-#endif
 		if (p->address_space_24 && rbc->rtgmem_size && rbc->rtgmem_type == GFXBOARD_UAE_Z3) {
 			error_log (_T("Z3 RTG and 24bit address space are not compatible."));
 			rbc->rtgmem_type = GFXBOARD_UAE_Z2;

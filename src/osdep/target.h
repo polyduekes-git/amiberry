@@ -28,7 +28,7 @@
 #define AMIBERRYBETA _T("")
 #endif
 
-#define AMIBERRYDATE MAKEBD(2025, 7, 9)
+#define AMIBERRYDATE MAKEBD(2025, 9, 5)
 #define COPYRIGHT _T("Copyright (C) 2025 Dimitris Panokostas")
 
 #ifndef AMIBERRYEXTRA
@@ -76,6 +76,7 @@ extern amiberry_hotkey quit_key;
 extern amiberry_hotkey action_replay_key;
 extern amiberry_hotkey fullscreen_key;
 extern amiberry_hotkey minimize_key;
+extern amiberry_hotkey right_amiga_key;
 
 extern int emulating;
 extern bool config_loaded;
