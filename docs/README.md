@@ -50,10 +50,18 @@ You can download the latest version from the [Releases](https://github.com/Blitt
 Or the Homebrew package:
 
       brew install --cask amiberry
-
+      
 ### Distro package management
 
 Some distros (like RetroPie, DietPi, Pimiga, and others) already include Amiberry either pre-installed or through their package management systems. Please follow the methods provided in those distros for a smoother experience and refer to their owners for support during this process.
+
+### FreeBSD
+
+Amiberry is available as port and pkg on FreeBSD, to install the port from source refer to [Compile from source](https://github.com/BlitterStudio/amiberry/wiki/Compile-from-source)
+
+to install the pkg:
+
+      pkg install amiberry
 
 ## Compile from source
 
