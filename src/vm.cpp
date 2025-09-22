@@ -299,7 +299,7 @@ static void *try_reserve(uintptr_t try_addr, uae_u32 size, int flags)
 	}
 #else
 	int mmap_flags = MAP_PRIVATE | MAP_ANON;
-    #if defined(__FreeBSD__)
+    #if defined(__FreeBSD__) && defined(__x86_64__)
     // On FreeBSD, force the main memory reservation into the low 32-bit space.
     // This is critical for the JIT's direct memory access model.
     // We use a fixed hint and explicitly add MAP_32BIT.
